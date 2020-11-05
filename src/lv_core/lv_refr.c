@@ -521,6 +521,7 @@ static void lv_refr_area(const lv_area_t * area_p)
                 disp_refr->driver.buffer->last_part = 1;
                 lv_refr_area_part(area_p);
             }
+        }
     }
 }
 
