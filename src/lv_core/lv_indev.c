@@ -541,7 +541,7 @@ static void indev_keypad_proc(lv_indev_t * i, lv_indev_data_t * data)
                 lv_group_focus_prev(g);
                 if(indev_reset_check(&i->proc)) return;
             }
-            /*Just send other keys again to the object (e.g. 'A' or `LV_GORUP_KEY_RIGHT)*/
+            /*Just send other keys again to the object (e.g. 'A' or `LV_GROUP_KEY_RIGHT)*/
             else {
                 lv_group_send_data(g, data->key);
                 if(indev_reset_check(&i->proc)) return;
@@ -807,25 +807,34 @@ static void indev_button_proc(lv_indev_t * i, lv_indev_data_t * data)
         return;
     }
 
-    i->proc.types.pointer.act_point.x = i->btn_points[data->btn_id].x;
-    i->proc.types.pointer.act_point.y = i->btn_points[data->btn_id].y;
+    lv_coord_t x = i->btn_points[data->btn_id].x;
+    lv_coord_t y = i->btn_points[data->btn_id].y;
 
-    /*Still the same point is pressed*/
-    if(i->proc.types.pointer.last_point.x == i->proc.types.pointer.act_point.x &&
-       i->proc.types.pointer.last_point.y == i->proc.types.pointer.act_point.y && data->state == LV_INDEV_STATE_PR) {
-        indev_proc_press(&i->proc);
+    /*If a new point comes always make a release*/
+    if(data->state == LV_INDEV_STATE_PR) {
+        if(i->proc.types.pointer.last_point.x != x ||
+           i->proc.types.pointer.last_point.y != y) {
+            indev_proc_release(&i->proc);
+        }
     }
-    else {
-        /*If a new point comes always make a release*/
-        indev_proc_release(&i->proc);
-    }
+
+    if(indev_reset_check(&i->proc)) return;
+
+    /*Save the new points*/
+    i->proc.types.pointer.act_point.x = x;
+    i->proc.types.pointer.act_point.y = y;
+
+    if(data->state == LV_INDEV_STATE_PR) indev_proc_press(&i->proc);
+    else indev_proc_release(&i->proc);
+
+    if(indev_reset_check(&i->proc)) return;
 
     i->proc.types.pointer.last_point.x = i->proc.types.pointer.act_point.x;
     i->proc.types.pointer.last_point.y = i->proc.types.pointer.act_point.y;
 }
 
 /**
- * Process the pressed state of LV_INDEV_TYPE_POINER input devices
+ * Process the pressed state of LV_INDEV_TYPE_POINTER input devices
  * @param indev pointer to an input device 'proc'
  * @return LV_RES_OK: no indev reset required; LV_RES_INV: indev reset is required
  */
@@ -866,11 +875,6 @@ static void indev_proc_press(lv_indev_proc_t * proc)
         proc->types.pointer.drag_throw_vect.x = 0;
         proc->types.pointer.drag_throw_vect.y = 0;
         indev_drag_throw(proc);
-    }
-
-    /*Do not use disabled objects*/
-    if(indev_obj_act && (lv_obj_get_state(indev_obj_act, LV_OBJ_PART_MAIN) & LV_STATE_DISABLED)) {
-        indev_obj_act = proc->types.pointer.act_obj;
     }
 
     /*If a new object was found reset some variables and send a pressed signal*/
@@ -1000,7 +1004,7 @@ static void indev_proc_press(lv_indev_proc_t * proc)
 }
 
 /**
- * Process the released state of LV_INDEV_TYPE_POINER input devices
+ * Process the released state of LV_INDEV_TYPE_POINTER input devices
  * @param proc pointer to an input device 'proc'
  */
 static void indev_proc_release(lv_indev_proc_t * proc)
@@ -1144,7 +1148,7 @@ lv_obj_t * lv_indev_search_obj(lv_obj_t * obj, lv_point_t * point)
                 hidden_i = lv_obj_get_parent(hidden_i);
             }
             /*No parent found with hidden == true*/
-            if(hidden_i == NULL) found_p = obj;
+            if(hidden_i == NULL && (lv_obj_get_state(obj, LV_OBJ_PART_MAIN) & LV_STATE_DISABLED) == false) found_p = obj;
         }
     }
 

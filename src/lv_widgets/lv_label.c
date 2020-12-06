@@ -185,11 +185,8 @@ void lv_label_set_text(lv_obj_t * label, const char * text)
 
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
 
-    /*If text is NULL then refresh */
-    if(text == NULL) {
-        lv_label_refr_text(label);
-        return;
-    }
+    /*If text is NULL then just refresh with the current text */
+    if(text == NULL) text = ext->text;
 
     LV_ASSERT_STR(text);
 
@@ -373,11 +370,11 @@ void lv_label_set_recolor(lv_obj_t * label, bool en)
     ext->recolor = en == false ? 0 : 1;
 
     lv_label_refr_text(label); /*Refresh the text because the potential color codes in text needs to
-                                  be hided or revealed*/
+                                  be hidden or revealed*/
 }
 
 /**
- * Set the label's animation speed in LV_LABEL_LONG_SROLL/SCROLL_CIRC modes
+ * Set the label's animation speed in LV_LABEL_LONG_SROLL/SROLL_CIRC modes
  * @param label pointer to a label object
  * @param anim_speed speed of animation in px/sec unit
  */
@@ -962,7 +959,7 @@ void lv_label_ins_text(lv_obj_t * label, uint32_t pos, const char * txt)
 #else
     _lv_txt_ins(ext->text, pos, txt);
 #endif
-    lv_label_refr_text(label);
+    lv_label_set_text(label, NULL);
 }
 
 /**
@@ -1289,7 +1286,7 @@ static lv_design_res_t lv_label_design(lv_obj_t * label, const lv_area_t * clip_
         label_draw_dsc.flag = flag;
         lv_obj_init_draw_label_dsc(label, LV_LABEL_PART_MAIN, &label_draw_dsc);
 
-        /* In SCROLL and SCROLL_CIRC mode the CENTER and RIGHT are pointless so remove them.
+        /* In SROLL and SROLL_CIRC mode the CENTER and RIGHT are pointless so remove them.
          * (In addition they will result misalignment is this case)*/
         if((ext->long_mode == LV_LABEL_LONG_SROLL || ext->long_mode == LV_LABEL_LONG_SROLL_CIRC) &&
            (ext->align == LV_LABEL_ALIGN_CENTER || ext->align == LV_LABEL_ALIGN_RIGHT)) {
