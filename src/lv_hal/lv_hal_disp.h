@@ -78,7 +78,7 @@ typedef struct _disp_drv_t {
     uint32_t rotated : 1; /**< 1: turn the display by 90 degree. @warning Does not update coordinates for you!*/
 
 #if LV_COLOR_SCREEN_TRANSP
-    /**Handle if the the screen doesn't have a solid (opa == LV_OPA_COVER) background.
+    /**Handle if the screen doesn't have a solid (opa == LV_OPA_COVER) background.
      * Use only if required because it's slower.*/
     uint32_t screen_transp : 1;
 #endif
@@ -173,11 +173,9 @@ uint8_t del_prev  :
     uint8_t inv_area_joined[LV_INV_BUF_SIZE];
     uint32_t inv_p : 10;
 
-    int render_direction; /**< 0 when rendering down, 1 when rendering up */
     /*Miscellaneous data*/
     uint32_t last_activity_time; /**< Last time there was activity on this display */
 } lv_disp_t;
-
 
 typedef enum {
     LV_DISP_SIZE_SMALL,
@@ -268,12 +266,6 @@ lv_coord_t lv_disp_get_ver_res(lv_disp_t * disp);
  * @return true: anti-aliasing is enabled; false: disabled
  */
 bool lv_disp_get_antialiasing(lv_disp_t * disp);
-
-static inline void lv_disp_set_direction(lv_disp_t * disp, int direction)
-{
-    disp->render_direction = direction;
-}
-
 
 /**
  * Get the DPI of the display
