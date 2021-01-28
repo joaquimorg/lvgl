@@ -12,10 +12,6 @@
 
 #include "../lv_misc/lv_gc.h"
 
-#if defined(LV_GC_INCLUDE)
-    #include LV_GC_INCLUDE
-#endif /* LV_ENABLE_GC */
-
 /*********************
  *      DEFINES
  *********************/
@@ -27,7 +23,7 @@
 
 /*BUTTON*/
 #define COLOR_BTN           (IS_LIGHT ? lv_color_hex(0xffffff) : lv_color_hex(0x586273))
-#define COLOR_BTN_PR        (IS_LIGHT ? lv_color_mix(theme.color_primary, COLOR_BTN, LV_OPA_10) : lv_color_mix(theme.color_primary, COLOR_BTN, LV_OPA_30))
+#define COLOR_BTN_PR        (IS_LIGHT ? lv_color_mix(theme.color_primary, COLOR_BTN, LV_OPA_20) : lv_color_mix(theme.color_primary, COLOR_BTN, LV_OPA_30))
 
 #define COLOR_BTN_CHK       (theme.color_primary)
 #define COLOR_BTN_CHK_PR    (lv_color_darken(theme.color_primary, LV_OPA_30))
@@ -316,10 +312,10 @@ static void basic_init(void)
     style_init_reset(&styles->pad_inner);
 
     lv_style_set_pad_inner(&styles->pad_inner, LV_STATE_DEFAULT,
-                           lv_disp_get_size_category(NULL) <= LV_DISP_MEDIUM_LIMIT ? LV_DPX(20) : LV_DPX(40));
+                           lv_disp_get_size_category(NULL) <= LV_DISP_SIZE_MEDIUM ? LV_DPX(20) : LV_DPX(40));
 
     style_init_reset(&styles->pad_small);
-    lv_style_int_t pad_small_value = lv_disp_get_size_category(NULL) <= LV_DISP_MEDIUM_LIMIT ? LV_DPX(10) : LV_DPX(20);
+    lv_style_int_t pad_small_value = lv_disp_get_size_category(NULL) <= LV_DISP_SIZE_MEDIUM ? LV_DPX(10) : LV_DPX(20);
     lv_style_set_pad_left(&styles->pad_small, LV_STATE_DEFAULT,  pad_small_value);
     lv_style_set_pad_right(&styles->pad_small, LV_STATE_DEFAULT, pad_small_value);
     lv_style_set_pad_top(&styles->pad_small, LV_STATE_DEFAULT,  pad_small_value);
@@ -684,7 +680,7 @@ static void page_init(void)
     lv_style_set_pad_right(&styles->sb, LV_STATE_DEFAULT,  LV_DPX(7));
     lv_style_set_pad_bottom(&styles->sb, LV_STATE_DEFAULT,  LV_DPX(7));
 
-#if  LV_USE_ANIMATION
+#if LV_USE_ANIMATION
     style_init_reset(&styles->edge_flash);
     lv_style_set_bg_opa(&styles->edge_flash, LV_STATE_DEFAULT, LV_OPA_COVER);
     lv_style_set_bg_color(&styles->edge_flash, LV_STATE_DEFAULT,  lv_color_hex3(0x888));
@@ -844,10 +840,6 @@ static void tabview_win_shared_init(void)
     style_init_reset(&styles->tabview_btns_bg);
     lv_style_set_bg_opa(&styles->tabview_btns_bg, LV_STATE_DEFAULT, LV_OPA_COVER);
     lv_style_set_bg_color(&styles->tabview_btns_bg, LV_STATE_DEFAULT, COLOR_BG);
-    lv_style_set_border_color(&styles->tabview_btns_bg, LV_STATE_DEFAULT,
-                              IS_LIGHT ? lv_color_hex(0xe4eaf0) : lv_color_hex(0x3b3e42));
-    lv_style_set_border_width(&styles->tabview_btns_bg, LV_STATE_DEFAULT, LV_DPX(5));
-    lv_style_set_border_side(&styles->tabview_btns_bg, LV_STATE_DEFAULT, LV_BORDER_SIDE_BOTTOM);
     lv_style_set_text_color(&styles->tabview_btns_bg, LV_STATE_DEFAULT, COLOR_SCR_TEXT);
     lv_style_set_image_recolor(&styles->tabview_btns_bg, LV_STATE_DEFAULT, lv_color_hex(0x979a9f));
     lv_style_set_pad_top(&styles->tabview_btns_bg, LV_STATE_DEFAULT, LV_DPX(7));
@@ -878,7 +870,6 @@ static void tabview_win_shared_init(void)
     lv_style_set_pad_inner(&styles->tabview_page_scrl, LV_STATE_DEFAULT, PAD_DEF);
 #endif
 }
-
 
 /**********************
  *   GLOBAL FUNCTIONS
@@ -958,7 +949,6 @@ lv_theme_t * lv_theme_material_init(lv_color_t color_primary, lv_color_t color_s
 
     return &theme;
 }
-
 
 static void theme_apply(lv_theme_t * th, lv_obj_t * obj, lv_theme_style_t name)
 {
@@ -1191,7 +1181,6 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj, lv_theme_style_t name)
             break;
 #endif
 
-
 #if LV_USE_ROLLER
         case LV_THEME_ROLLER:
             list = lv_obj_get_style_list(obj, LV_ROLLER_PART_BG);
@@ -1214,7 +1203,6 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj, lv_theme_style_t name)
             list = lv_obj_get_style_list(obj, LV_LIST_PART_BG);
             _lv_style_list_add_style(list, &styles->bg);
             _lv_style_list_add_style(list, &styles->list_bg);
-
 
             list = lv_obj_get_style_list(obj, LV_LIST_PART_SCROLLBAR);
             _lv_style_list_add_style(list, &styles->sb);
@@ -1318,7 +1306,6 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj, lv_theme_style_t name)
             break;
 
 #endif
-
 
 #if LV_USE_SPINBOX
         case LV_THEME_SPINBOX:

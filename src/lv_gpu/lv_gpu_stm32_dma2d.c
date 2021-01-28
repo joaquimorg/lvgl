@@ -65,7 +65,7 @@ void lv_gpu_stm32_dma2d_init(void)
     /* Enable DMA2D clock */
 #if defined(STM32F4) || defined(STM32F7)
     RCC->AHB1ENR |= RCC_AHB1ENR_DMA2DEN;
-#elif  defined(STM32H7)
+#elif defined(STM32H7)
     RCC->AHB3ENR |= RCC_AHB3ENR_DMA2DEN;
 #else
 # warning "LVGL can't enable the clock of DMA2D"
@@ -226,7 +226,8 @@ void lv_gpu_stm32_dma2d_wait_cb(lv_disp_drv_t * drv)
         while(DMA2D->CR & DMA2D_CR_START_Msk) {
             drv->wait_cb(drv);
         }
-    } else {
+    }
+    else {
         while(DMA2D->CR & DMA2D_CR_START_Msk);
     }
 }
@@ -241,7 +242,8 @@ static void invalidate_cache(void)
     if(disp->driver.clean_dcache_cb) disp->driver.clean_dcache_cb(&disp->driver);
     else {
 #if __CORTEX_M >= 0x07
-        SCB_CleanInvalidateDCache();
+        if((SCB->CCR) & (uint32_t)SCB_CCR_DC_Msk)
+            SCB_CleanInvalidateDCache();
 #endif
     }
 }
