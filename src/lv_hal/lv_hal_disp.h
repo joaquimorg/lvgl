@@ -172,6 +172,8 @@ uint8_t del_prev  :
     lv_area_t inv_areas[LV_INV_BUF_SIZE];
     uint8_t inv_area_joined[LV_INV_BUF_SIZE];
     uint32_t inv_p : 10;
+    
+    int render_direction; /**< 0 when rendering down, 1 when rendering up */
 
     /*Miscellaneous data*/
     uint32_t last_activity_time; /**< Last time there was activity on this display */
@@ -339,6 +341,18 @@ bool lv_disp_is_double_buf(lv_disp_t * disp);
  * @return true: double buffered; false: not double buffered
  */
 bool lv_disp_is_true_double_buf(lv_disp_t * disp);
+
+
+/**
+ * @brief 
+ * 
+ * @param disp 
+ * @param direction 
+ */
+static inline void lv_disp_set_direction(lv_disp_t * disp, int direction)
+{
+    disp->render_direction = direction;
+}
 
 /**********************
  *      MACROS
