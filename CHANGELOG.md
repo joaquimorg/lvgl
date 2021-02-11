@@ -1,6 +1,14 @@
 # Changelog
 
-## v7.9.2 (Planned for 02.02.2021)
+## v7.10.1 (Planned for 16.02.2021)
+
+### Bugfixes
+- fix(indev) clear the indev's `act_obj` in `lv_indev_reset`
+- fix(text) fix out of bounds read in `_lv_txt_get_width`
+- fix(text) improve Arabic contextual analysis by adding hyphen processing and proper handling of lam-alef sequence
+- fix(delete) delete animation after the children are deleted
+
+## v7.10.0
 
 ### New features
 - feat(indev) allow input events to be passed to disabled objects

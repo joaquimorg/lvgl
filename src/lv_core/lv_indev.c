@@ -164,6 +164,12 @@ void lv_indev_reset(lv_indev_t * indev, lv_obj_t * obj)
         if(obj == NULL || indev->proc.types.pointer.last_pressed == obj) {
             indev->proc.types.pointer.last_pressed = NULL;
         }
+        if(obj == NULL || indev->proc.types.pointer.act_obj == obj) {
+            indev->proc.types.pointer.act_obj = NULL;
+        }
+        if(obj == NULL || indev->proc.types.pointer.last_obj == obj) {
+            indev->proc.types.pointer.last_obj = NULL;
+        }
     }
     else {
         lv_indev_t * i = lv_indev_get_next(NULL);
@@ -172,6 +178,12 @@ void lv_indev_reset(lv_indev_t * indev, lv_obj_t * obj)
             if(indev_act == i) indev_obj_act = NULL;
             if(obj == NULL || i->proc.types.pointer.last_pressed == obj) {
                 i->proc.types.pointer.last_pressed = NULL;
+            }
+            if(obj == NULL || i->proc.types.pointer.act_obj == obj) {
+                i->proc.types.pointer.act_obj = NULL;
+            }
+            if(obj == NULL || i->proc.types.pointer.last_obj == obj) {
+                i->proc.types.pointer.last_obj = NULL;
             }
             i = lv_indev_get_next(i);
         }
@@ -1148,7 +1160,7 @@ lv_obj_t * lv_indev_search_obj(lv_obj_t * obj, lv_point_t * point)
                 hidden_i = lv_obj_get_parent(hidden_i);
             }
             /*No parent found with hidden == true*/
-            if(lv_obj_is_protected(obj, LV_PROTECT_EVENT_TO_DISABLED) == false){
+            if(lv_obj_is_protected(obj, LV_PROTECT_EVENT_TO_DISABLED) == false) {
                 if(hidden_i == NULL && (lv_obj_get_state(obj, LV_OBJ_PART_MAIN) & LV_STATE_DISABLED) == false) found_p = obj;
             }
             else {
