@@ -463,20 +463,6 @@ static void lv_refr_area(const lv_area_t * area_p)
             }
         }
 
-        /*Always use the full row*/
-        /*lv_coord_t row;
-        lv_coord_t row_last = 0;
-        for(row = area_p->y1; row + max_row - 1 <= y2; row += max_row) {
-            //Calc. the next y coordinates of VDB
-            vdb->area.x1 = area_p->x1;
-            vdb->area.x2 = area_p->x2;
-            vdb->area.y1 = row;
-            vdb->area.y2 = row + max_row - 1;
-            if(vdb->area.y2 > y2) vdb->area.y2 = y2;
-            row_last = vdb->area.y2;
-            if(y2 == row_last) disp_refr->driver.buffer->last_part = 1;
-            lv_refr_area_part(area_p);*/
-
         if (disp_refr->render_direction) {
             /*Always use the full row*/
             lv_coord_t row;
@@ -519,15 +505,7 @@ static void lv_refr_area(const lv_area_t * area_p)
                 row_last = vdb->area.y2;
                 lv_refr_area_part(area_p);
             }
-        /*
-        //If the last y coordinates are not handled yet ...
-        if(y2 != row_last) {
-            //Calc. the next y coordinates of VDB
-            vdb->area.x1 = area_p->x1;
-            vdb->area.x2 = area_p->x2;
-            vdb->area.y1 = row;
-            vdb->area.y2 = y2;
-        */
+        
             /*If the last y coordinates are not handled yet ...*/
             if(y2 != row_last) {
                 /*Calc. the next y coordinates of VDB*/
