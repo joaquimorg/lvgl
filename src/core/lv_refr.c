@@ -458,31 +458,60 @@ static void lv_refr_area(const lv_area_t * area_p)
             }
         }
 
-        /*Always use the full row*/
-        lv_coord_t row;
-        lv_coord_t row_last = 0;
-        for(row = area_p->y1; row + max_row - 1 <= y2; row += max_row) {
-            /*Calc. the next y coordinates of draw_buf*/
-            draw_buf->area.x1 = area_p->x1;
-            draw_buf->area.x2 = area_p->x2;
-            draw_buf->area.y1 = row;
-            draw_buf->area.y2 = row + max_row - 1;
-            if(draw_buf->area.y2 > y2) draw_buf->area.y2 = y2;
-            row_last = draw_buf->area.y2;
-            if(y2 == row_last) disp_refr->driver->draw_buf->last_part = 1;
-            lv_refr_area_part(area_p);
-        }
 
-        /*If the last y coordinates are not handled yet ...*/
-        if(y2 != row_last) {
-            /*Calc. the next y coordinates of draw_buf*/
-            draw_buf->area.x1 = area_p->x1;
-            draw_buf->area.x2 = area_p->x2;
-            draw_buf->area.y1 = row;
-            draw_buf->area.y2 = y2;
+        if (disp_refr->render_direction) {
 
-            disp_refr->driver->draw_buf->last_part = 1;
-            lv_refr_area_part(area_p);
+            /*Always use the full row*/
+            lv_coord_t row;
+            lv_coord_t row_last = y2;
+            for(row = area_p->y2; row > max_row - 1 + area_p->y1; row -= max_row) {
+                /*Calc. the next y coordinates of draw_buf*/
+                draw_buf->area.x1 = area_p->x1;
+                draw_buf->area.x2 = area_p->x2;
+                draw_buf->area.y1 = row - max_row + 1;
+                draw_buf->area.y2 = row;
+                if(draw_buf->area.y2 > y2) draw_buf->area.y2 = y2;
+                row_last = draw_buf->area.y1;
+                if(y2 == row_last) disp_refr->driver->draw_buf->last_part = 1;
+                lv_refr_area_part(area_p);
+            }
+
+            /*If the last y coordinates are not handled yet ...*/
+            if(area_p->y1 != row_last) {
+                /*Calc. the next y coordinates of draw_buf*/
+                draw_buf->area.x1 = area_p->x1;
+                draw_buf->area.x2 = area_p->x2;
+                draw_buf->area.y1 = area_p->y1;
+                draw_buf->area.y2 = row;
+                
+                lv_refr_area_part(area_p);
+            }
+        } else {
+            /*Always use the full row*/
+            lv_coord_t row;
+            lv_coord_t row_last = 0;
+            for(row = area_p->y1; row + max_row - 1 <= y2; row += max_row) {
+                /*Calc. the next y coordinates of draw_buf*/
+                draw_buf->area.x1 = area_p->x1;
+                draw_buf->area.x2 = area_p->x2;
+                draw_buf->area.y1 = row;
+                draw_buf->area.y2 = row + max_row - 1;
+                if(draw_buf->area.y2 > y2) draw_buf->area.y2 = y2;
+                row_last = draw_buf->area.y2;
+                lv_refr_area_part(area_p);
+            }
+
+            /*If the last y coordinates are not handled yet ...*/
+            if(y2 != row_last) {
+                /*Calc. the next y coordinates of draw_buf*/
+                draw_buf->area.x1 = area_p->x1;
+                draw_buf->area.x2 = area_p->x2;
+                draw_buf->area.y1 = row;
+                draw_buf->area.y2 = y2;
+
+                disp_refr->driver->draw_buf->last_part = 1;
+                lv_refr_area_part(area_p);
+            }
         }
     }
 }

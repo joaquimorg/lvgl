@@ -176,6 +176,8 @@ typedef struct _lv_disp_t {
     uint8_t inv_area_joined[LV_INV_BUF_SIZE];
     uint16_t inv_p;
 
+    int render_direction; /**< 0 when rendering down, 1 when rendering up */
+
     /*Miscellaneous data*/
     uint32_t last_activity_time;        /**< Last time when there was activity on this display*/
 } lv_disp_t;
@@ -343,6 +345,17 @@ bool lv_disp_is_double_buf(lv_disp_t * disp);
  * @return true: double buffered; false: not double buffered
  */
 bool lv_disp_is_true_double_buf(lv_disp_t * disp);
+
+/**
+ * @brief 
+ * 
+ * @param disp 
+ * @param direction 
+ */
+static inline void lv_disp_set_direction(lv_disp_t * disp, int direction)
+{
+    disp->render_direction = direction;
+}
 
 /**********************
  *      MACROS
