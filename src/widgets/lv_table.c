@@ -47,6 +47,7 @@ const lv_obj_class_t lv_table_class  = {
     .destructor_cb = lv_table_destructor,
     .event_cb = lv_table_event,
     .base_class = &lv_obj_class,
+    .editable = LV_OBJ_CLASS_EDITABLE_TRUE,
     .instance_size = sizeof(lv_table_t),
 };
 /**********************
@@ -474,44 +475,65 @@ static void lv_table_event(lv_obj_t * obj, lv_event_t e)
     else if(e == LV_EVENT_PRESSED || e == LV_EVENT_PRESSING) {
         uint16_t col;
         uint16_t row;
-        get_pressed_cell(obj, &row, &col);
+        lv_res_t pr_res = get_pressed_cell(obj, &row, &col);
 
-        if(table->col_act != col || table->row_act != row) {
+        if(pr_res == LV_RES_OK && (table->col_act != col || table->row_act != row)) {
             table->col_act = col;
             table->row_act = row;
-            lv_obj_invalidate(obj);
         }
+        lv_obj_invalidate(obj);
     }
     else if(e == LV_EVENT_RELEASED) {
+        lv_obj_invalidate(obj);
         lv_indev_t * indev = lv_indev_get_act();
         lv_obj_t * scroll_obj = lv_indev_get_scroll_obj(indev);
-        if(table->col_act != 0xFFFF && table->row_act != 0xFFFF && scroll_obj == NULL) {
+        if(table->col_act != LV_TABLE_CELL_NONE && table->row_act != LV_TABLE_CELL_NONE && scroll_obj == NULL) {
             res = lv_event_send(obj, LV_EVENT_VALUE_CHANGED, NULL);
             if(res != LV_RES_OK) return;
         }
 
         lv_indev_type_t indev_type = lv_indev_get_type(lv_indev_get_act());
         if(indev_type == LV_INDEV_TYPE_POINTER || indev_type == LV_INDEV_TYPE_BUTTON) {
-            table->col_act = 0xFFFF;
-            table->row_act = 0xFFFF;
-            lv_obj_invalidate(obj);
+            table->col_act = LV_TABLE_CELL_NONE;
+            table->row_act = LV_TABLE_CELL_NONE;
         }
     }
-    else if(e == LV_EVENT_KEY) {
+    else if(e == LV_EVENT_FOCUSED) {
+        lv_obj_invalidate(obj);
+    } else if(e == LV_EVENT_KEY) {
         int32_t c = *((int32_t *)lv_event_get_param());
         int32_t col = table->col_act;
         int32_t row = table->row_act;
+        if(col == LV_TABLE_CELL_NONE || row == LV_TABLE_CELL_NONE) {
+            table->col_act = 0;
+            table->row_act = 0;
+            lv_obj_invalidate(obj);
+            return;
+        }
+
+        if(col >= table->col_cnt) col = 0;
+        if(row >= table->row_cnt) row = 0;
+
         if(c == LV_KEY_LEFT) col--;
         else if(c == LV_KEY_RIGHT) col++;
         else if(c == LV_KEY_UP) row--;
         else if(c == LV_KEY_DOWN) row++;
+        else return;
 
         if(col >= table->col_cnt) {
-            col = 0;
-            row++;
+            if(row < table->row_cnt) {
+                col = 0;
+                row++;
+            } else {
+                col = table->col_cnt - 1;
+            }
         } else if (col < 0) {
-            col = table->col_cnt - 1;
-            row--;
+            if(row != 0) {
+                col = table->col_cnt - 1;
+                row--;
+            } else {
+                col = 0;
+            }
         }
 
         if(row >= table->row_cnt) {
@@ -556,7 +578,7 @@ static void draw_main(lv_obj_t * obj)
 
     lv_state_t state_ori = obj->state;
     obj->state = LV_STATE_DEFAULT;
-    obj->style_list.skip_trans = 1;
+    obj->skip_trans = 1;
     lv_draw_rect_dsc_t rect_dsc_def;
     lv_draw_rect_dsc_t rect_dsc_act; /*Passed to the event to modify it*/
     lv_draw_rect_dsc_init(&rect_dsc_def);
@@ -567,7 +589,7 @@ static void draw_main(lv_obj_t * obj)
     lv_draw_label_dsc_init(&label_dsc_def);
     lv_obj_init_draw_label_dsc(obj, LV_PART_ITEMS, &label_dsc_def);
     obj->state = state_ori;
-    obj->style_list.skip_trans = 0;
+    obj->skip_trans = 0;
 
     uint16_t col;
     uint16_t row;
@@ -664,13 +686,13 @@ static void draw_main(lv_obj_t * obj)
             /*In other cases get the styles directly without caching them*/
             else {
                 obj->state = cell_state;
-                obj->style_list.skip_trans = 1;
+                obj->skip_trans = 1;
                 lv_draw_rect_dsc_init(&rect_dsc_act);
                 lv_draw_label_dsc_init(&label_dsc_act);
                 lv_obj_init_draw_rect_dsc(obj, LV_PART_ITEMS, &rect_dsc_act);
                 lv_obj_init_draw_label_dsc(obj, LV_PART_ITEMS, &label_dsc_act);
                 obj->state = state_ori;
-                obj->style_list.skip_trans = 0;
+                obj->skip_trans = 0;
             }
 
             dsc.draw_area = &cell_area_border;
@@ -803,8 +825,8 @@ static lv_res_t get_pressed_cell(lv_obj_t * obj, uint16_t * row, uint16_t * col)
 
     lv_indev_type_t type = lv_indev_get_type(lv_indev_get_act());
     if(type != LV_INDEV_TYPE_POINTER && type != LV_INDEV_TYPE_BUTTON) {
-        if(col) *col = 0xFFFF;
-        if(row) *row = 0xFFFF;
+        if(col) *col = LV_TABLE_CELL_NONE;
+        if(row) *row = LV_TABLE_CELL_NONE;
         return LV_RES_INV;
     }
 

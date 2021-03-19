@@ -192,6 +192,9 @@ e.g. "stm32f769xx.h" or "stm32f429xx.h"*/
  * Requires LV_MEM_CUSTOM = 0*/
 #define LV_USE_MEM_MONITOR      0
 
+/*1: Draw random colored rectangles over the redrawn areas*/
+#define LV_USE_REFR_DEBUG       0
+
 /*Change the built in (v)snprintf functions*/
 #define LV_SPRINTF_CUSTOM   0
 #if LV_SPRINTF_CUSTOM
@@ -473,6 +476,9 @@ typedef void * lv_user_data_t;
 /*Default transition time in [ms]*/
 # define LV_THEME_DEFAULT_TRANSITON_TIME    80
 #endif /*LV_USE_THEME_DEFAULT*/
+
+ /*An very simple them that is a good starting point for a custom theme*/
+ #define LV_USE_THEME_BASIC    1
 
 /*-----------
  * Layouts
