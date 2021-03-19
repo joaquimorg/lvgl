@@ -489,7 +489,7 @@ static void lv_refr_area(const lv_area_t * area_p)
                     vdb->area.x2 = area_p->x2;
                     vdb->area.y1 = area_p->y1;
                     vdb->area.y2 = row;
-
+                    disp_refr->driver.buffer->last_part = 1;
                     /*Refresh this part too*/
                     lv_refr_area_part(area_p);
                 }
@@ -506,6 +506,7 @@ static void lv_refr_area(const lv_area_t * area_p)
                     vdb->area.y2 = row + max_row - 1;
                     if(vdb->area.y2 > y2) vdb->area.y2 = y2;
                     row_last = vdb->area.y2;
+                    if(y2 == row_last) disp_refr->driver.buffer->last_part = 1;
                     lv_refr_area_part(area_p);
                 }
             
@@ -516,7 +517,6 @@ static void lv_refr_area(const lv_area_t * area_p)
                     vdb->area.x2 = area_p->x2;
                     vdb->area.y1 = row;
                     vdb->area.y2 = y2;
-
                     disp_refr->driver.buffer->last_part = 1;
                     lv_refr_area_part(area_p);
                 }
@@ -581,11 +581,50 @@ static void lv_refr_area(const lv_area_t * area_p)
                     vdb->area.x2 = column;
                     vdb->area.y1 = area_p->y1;
                     vdb->area.y2 = area_p->y2;
-
+                    disp_refr->driver.buffer->last_part = 1;
                     /*Refresh this part too*/
                     lv_refr_area_part(area_p);
                 }
-            } else {
+            } else if (disp_refr->render_direction == 4) {
+                /*Always use the full column*/
+                lv_coord_t column;
+                lv_coord_t column_last = x2;
+                for(column = area_p->x2; column > max_column - 1 + area_p->x1; column -= max_column * 2) {
+                    /*Calc. the next x coordinates of VDB*/                    
+                    vdb->area.x1 = column - max_column + 1;
+                    vdb->area.x2 = column;
+                    vdb->area.y1 = area_p->y1;
+                    vdb->area.y2 = area_p->y2;
+                    if(vdb->area.x2 > x2) vdb->area.x2 = x2;
+                    column_last = vdb->area.x1;
+                    if(x2 == column_last) disp_refr->driver.buffer->last_part = 1;
+                    lv_refr_area_part(area_p);
+                }
+
+                for(column = area_p->x2; column > max_column - 1 + area_p->x1; column -= max_column * 2) {
+                    /*Calc. the next x coordinates of VDB*/                    
+                    vdb->area.x1 = (column - max_column + 1) - max_column;
+                    vdb->area.x2 = column - max_column;
+                    vdb->area.y1 = area_p->y1;
+                    vdb->area.y2 = area_p->y2;
+                    if(vdb->area.x2 > x2) vdb->area.x2 = x2;
+                    column_last = vdb->area.x1;
+                    if(x2 == column_last) disp_refr->driver.buffer->last_part = 1;
+                    lv_refr_area_part(area_p);
+                }
+
+                /*If the last (first) x coordinates are not handled yet ...*/
+                if(area_p->x1 != column_last) {
+                    /*Calc. the next x coordinates of VDB*/
+                    vdb->area.x1 = area_p->x1;
+                    vdb->area.x2 = column;
+                    vdb->area.y1 = area_p->y1;
+                    vdb->area.y2 = area_p->y2;
+                    disp_refr->driver.buffer->last_part = 1;
+                    /*Refresh this part too*/
+                    lv_refr_area_part(area_p);
+                }
+            } else if (disp_refr->render_direction == 3) {
                 /*Always use the full column*/
                 lv_coord_t column;
                 lv_coord_t column_last = 0;
@@ -597,6 +636,45 @@ static void lv_refr_area(const lv_area_t * area_p)
                     vdb->area.y2 = area_p->y2;                    
                     if(vdb->area.x2 > x2) vdb->area.x2 = x2;
                     column_last = vdb->area.x2;
+                    if(x2 == column_last) disp_refr->driver.buffer->last_part = 1;
+                    lv_refr_area_part(area_p);
+                }
+            
+                /*If the last y coordinates are not handled yet ...*/
+                if(x2 != column_last) {
+                    /*Calc. the next y coordinates of VDB*/
+                    vdb->area.x1 = column;
+                    vdb->area.x2 = x2;
+                    vdb->area.y1 = area_p->y1;
+                    vdb->area.y2 = area_p->y2;
+                    disp_refr->driver.buffer->last_part = 1;
+                    lv_refr_area_part(area_p);
+                }
+            } else if (disp_refr->render_direction == 5) {
+                /*Always use the full column*/
+                lv_coord_t column;
+                lv_coord_t column_last = 0;
+                for(column = area_p->x1; column + max_column - 1 <= x2; column += max_column * 2) {
+                    /*Calc. the next y coordinates of VDB*/
+                    vdb->area.x1 = column;
+                    vdb->area.x2 = column + max_column - 1;
+                    vdb->area.y1 = area_p->y1;
+                    vdb->area.y2 = area_p->y2;                    
+                    if(vdb->area.x2 > x2) vdb->area.x2 = x2;
+                    column_last = vdb->area.x2;
+                    if(x2 == column_last) disp_refr->driver.buffer->last_part = 1;
+                    lv_refr_area_part(area_p);
+                }
+
+                for(column = area_p->x1; column + max_column - 1 <= x2; column += max_column * 2) {
+                    /*Calc. the next y coordinates of VDB*/
+                    vdb->area.x1 = column + max_column;
+                    vdb->area.x2 = (column + max_column - 1) + max_column;
+                    vdb->area.y1 = area_p->y1;
+                    vdb->area.y2 = area_p->y2;                    
+                    if(vdb->area.x2 > x2) vdb->area.x2 = x2;
+                    column_last = vdb->area.x2;
+                    if(x2 == column_last) disp_refr->driver.buffer->last_part = 1;
                     lv_refr_area_part(area_p);
                 }
             
