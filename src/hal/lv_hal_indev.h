@@ -139,7 +139,7 @@ typedef struct _lv_indev_drv_t {
     uint16_t long_press_time;
 
     /**< Repeated trigger period in long press [ms]*/
-    uint16_t long_press_rep_time;
+    uint16_t long_press_repeat_time;
 } lv_indev_drv_t;
 
 /** Run time data of input devices
@@ -158,6 +158,7 @@ typedef struct _lv_indev_proc_t {
             /*Pointer and button data*/
             lv_point_t act_point; /**< Current point of input device.*/
             lv_point_t last_point; /**< Last point of input device.*/
+            lv_point_t last_raw_point; /**< Last point read from read_cb. */
             lv_point_t vect; /**< Difference between `act_point` and `last_point`.*/
             lv_point_t scroll_sum; /*Count the dragged pixels to check LV_INDEV_DEF_SCROLL_LIMIT*/
             lv_point_t scroll_throw_vect;

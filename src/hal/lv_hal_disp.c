@@ -118,6 +118,11 @@ lv_disp_t * lv_disp_drv_register(lv_disp_drv_t * driver)
         return NULL;
     }
 
+    if(driver->full_refresh && driver->draw_buf->size < (uint32_t)driver->hor_res * driver->ver_res) {
+        driver->full_refresh = 0;
+        LV_LOG_WARN("full_refresh requires at least screen sized draw buffer(s)")
+    }
+
     disp->bg_color = lv_color_white();
 #if LV_COLOR_SCREEN_TRANSP
     disp->bg_opa = LV_OPA_TRANSP;
@@ -127,15 +132,15 @@ lv_disp_t * lv_disp_drv_register(lv_disp_drv_t * driver)
 
 #if LV_USE_THEME_DEFAULT
     if(lv_theme_default_is_inited() == false) {
-        disp->theme = lv_theme_default_init(disp, LV_COLOR_PALETTE_BLUE, LV_COLOR_PALETTE_CYAN, LV_FONT_DEFAULT, LV_FONT_DEFAULT, LV_FONT_DEFAULT);
+        disp->theme = lv_theme_default_init(disp, LV_PALETTE_BLUE, LV_PALETTE_CYAN, false, LV_FONT_DEFAULT, LV_FONT_DEFAULT, LV_FONT_DEFAULT);
     }
 #endif
 
-    disp->act_scr   = lv_obj_create(NULL, NULL); /*Create a default screen on the display*/
-    disp->top_layer = lv_obj_create(NULL, NULL); /*Create top layer on the display*/
-    disp->sys_layer = lv_obj_create(NULL, NULL); /*Create sys layer on the display*/
-    lv_obj_remove_style(disp->top_layer, LV_PART_ANY, LV_STATE_ANY, NULL);
-    lv_obj_remove_style(disp->sys_layer, LV_PART_ANY, LV_STATE_ANY, NULL);
+    disp->act_scr   = lv_obj_create(NULL); /*Create a default screen on the display*/
+    disp->top_layer = lv_obj_create(NULL); /*Create top layer on the display*/
+    disp->sys_layer = lv_obj_create(NULL); /*Create sys layer on the display*/
+    lv_obj_remove_style_all(disp->top_layer);
+    lv_obj_remove_style_all(disp->sys_layer);
     lv_obj_clear_flag(disp->top_layer, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_clear_flag(disp->sys_layer, LV_OBJ_FLAG_CLICKABLE);
 
@@ -161,6 +166,11 @@ void lv_disp_drv_update(lv_disp_t * disp, lv_disp_drv_t * new_drv)
 {
     disp->driver = new_drv;
 
+    if(disp->driver->full_refresh && disp->driver->draw_buf->size < (uint32_t)disp->driver->hor_res * disp->driver->ver_res) {
+        disp->driver->full_refresh = 0;
+        LV_LOG_WARN("full_refresh requires at least screen sized draw buffer(s)")
+    }
+
     lv_coord_t w = lv_disp_get_hor_res(disp);
     lv_coord_t h = lv_disp_get_ver_res(disp);
     uint32_t i;
@@ -169,7 +179,7 @@ void lv_disp_drv_update(lv_disp_t * disp, lv_disp_drv_t * new_drv)
         lv_obj_get_coords(disp->screens[i], &prev_coords);
         lv_area_set_width(&disp->screens[i]->coords, w);
         lv_area_set_height(&disp->screens[i]->coords, h);
-        lv_event_send(disp->screens[i], LV_EVENT_COORD_CHANGED, &prev_coords);
+        lv_event_send(disp->screens[i], LV_EVENT_SIZE_CHANGED, &prev_coords);
     }
 
     /*
@@ -348,59 +358,6 @@ lv_disp_t * lv_disp_get_next(lv_disp_t * disp)
 lv_disp_draw_buf_t * lv_disp_get_draw_buf(lv_disp_t * disp)
 {
     return disp->driver->draw_buf;
-}
-
-/**
- * Get the number of areas in the buffer
- * @return number of invalid areas
- */
-uint16_t lv_disp_get_inv_buf_size(lv_disp_t * disp)
-{
-    return disp->inv_p;
-}
-
-/**
- * Pop (delete) the last 'num' invalidated areas from the buffer
- * @param num number of areas to delete
- */
-void _lv_disp_pop_from_inv_buf(lv_disp_t * disp, uint16_t num)
-{
-
-    if(disp->inv_p < num)
-        disp->inv_p = 0;
-    else
-        disp->inv_p -= num;
-}
-
-/**
- * Check the driver configuration if it's double buffered (both `buf1` and `buf2` are set)
- * @param disp pointer to to display to check
- * @return true: double buffered; false: not double buffered
- */
-bool lv_disp_is_double_buf(lv_disp_t * disp)
-{
-    if(disp->driver->draw_buf->buf1 && disp->driver->draw_buf->buf2)
-        return true;
-    else
-        return false;
-}
-
-/**
- * Check the driver configuration if it's TRUE double buffered (both `buf1` and `buf2` are set and
- * `size` is screen sized)
- * @param disp pointer to to display to check
- * @return true: double buffered; false: not double buffered
- */
-bool lv_disp_is_true_double_buf(lv_disp_t * disp)
-{
-    uint32_t scr_size = disp->driver->hor_res * disp->driver->ver_res;
-
-    if(lv_disp_is_double_buf(disp) && disp->driver->draw_buf->size == scr_size) {
-        return true;
-    }
-    else {
-        return false;
-    }
 }
 
 /**

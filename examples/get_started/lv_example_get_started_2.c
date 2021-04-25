@@ -1,4 +1,4 @@
-#include "../../lvgl.h"
+#include "../lv_examples.h"
 #if LV_USE_BTN && LV_BUILD_EXAMPLES
 
 /**
@@ -14,8 +14,8 @@ void lv_example_get_started_2(void)
     lv_style_init(&style_btn);
     lv_style_set_radius(&style_btn, 10);
     lv_style_set_bg_opa(&style_btn, LV_OPA_COVER);
-    lv_style_set_bg_color(&style_btn, lv_color_grey_lighten_3());
-    lv_style_set_bg_grad_color(&style_btn, lv_color_grey());
+    lv_style_set_bg_color(&style_btn, lv_palette_lighten(LV_PALETTE_GREY, 3));
+    lv_style_set_bg_grad_color(&style_btn, lv_palette_main(LV_PALETTE_GREY));
     lv_style_set_bg_grad_dir(&style_btn, LV_GRAD_DIR_VER);
 
     /*Add a border*/
@@ -28,39 +28,39 @@ void lv_example_get_started_2(void)
 
     /*Create a red style. Change only some colors.*/
     lv_style_init(&style_btn_red);
-    lv_style_set_bg_color(&style_btn_red, lv_color_light_blue());
-    lv_style_set_bg_grad_color(&style_btn_red, lv_color_light_blue_darken_3());
+    lv_style_set_bg_color(&style_btn_red, lv_palette_main(LV_PALETTE_RED));
+    lv_style_set_bg_grad_color(&style_btn_red, lv_palette_lighten(LV_PALETTE_RED, 2));
 
-    /*Create a style for the pressed state. Add color filter to make every color darker*/
+    /*Create a style for the pressed state.*/
     lv_style_init(&style_btn_pressed);
-    lv_style_set_bg_color(&style_btn_red, lv_color_blue());
-    lv_style_set_bg_grad_color(&style_btn_red, lv_color_blue_darken_3());
+    lv_style_set_bg_color(&style_btn_pressed, lv_palette_main(LV_PALETTE_BLUE));
+    lv_style_set_bg_grad_color(&style_btn_pressed, lv_palette_darken(LV_PALETTE_RED, 3));
 
     /*Create a button and use the new styles*/
-    lv_obj_t * btn = lv_btn_create(lv_scr_act(), NULL);     /*Add a button the current screen*/
+    lv_obj_t * btn = lv_btn_create(lv_scr_act());     /*Add a button the current screen*/
     lv_obj_set_pos(btn, 10, 10);                            /*Set its position*/
     lv_obj_set_size(btn, 120, 50);                          /*Set its size*/
-    lv_obj_remove_style(btn, LV_PART_ANY, LV_STATE_ANY, NULL); /*Remove the styles coming from the theme*/
-    lv_obj_add_style(btn, LV_PART_MAIN, LV_STATE_DEFAULT, &style_btn);
-    lv_obj_add_style(btn, LV_PART_MAIN, LV_STATE_PRESSED, &style_btn_pressed);
+    lv_obj_remove_style_all(btn); /*Remove the styles coming from the theme*/
+    lv_obj_add_style(btn, &style_btn, 0);
+    lv_obj_add_style(btn, &style_btn_pressed, LV_STATE_PRESSED);
 
-    lv_obj_t * label = lv_label_create(btn, NULL);          /*Add a label to the button*/
+    lv_obj_t * label = lv_label_create(btn);          /*Add a label to the button*/
     lv_label_set_text(label, "Button");                     /*Set the labels text*/
-    lv_obj_align(label, NULL, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_center(label);
 
     /*Create an other button and use the red style too*/
-    lv_obj_t * btn2 = lv_btn_create(lv_scr_act(), NULL);
+    lv_obj_t * btn2 = lv_btn_create(lv_scr_act());
     lv_obj_set_pos(btn2, 10, 80);
     lv_obj_set_size(btn2, 120, 50);                            /*Set its size*/
-    lv_obj_remove_style(btn2, LV_PART_ANY, LV_STATE_ANY, NULL); /*Remove the styles coming from the theme*/
-    lv_obj_add_style(btn2, LV_PART_MAIN, LV_STATE_DEFAULT, &style_btn);
-    lv_obj_add_style(btn2, LV_PART_MAIN, LV_STATE_DEFAULT, &style_btn_red);
-    lv_obj_add_style(btn2, LV_PART_MAIN, LV_STATE_PRESSED, &style_btn_pressed);
-    lv_obj_set_style_radius(btn2, LV_PART_MAIN, LV_STATE_DEFAULT, LV_RADIUS_CIRCLE); /*Add a local style*/
+    lv_obj_remove_style_all(btn2); /*Remove the styles coming from the theme*/
+    lv_obj_add_style(btn2, &style_btn, 0);
+    lv_obj_add_style(btn2, &style_btn_red, 0);
+    lv_obj_add_style(btn2, &style_btn_pressed, LV_STATE_PRESSED);
+    lv_obj_set_style_radius(btn2, LV_RADIUS_CIRCLE, 0); /*Add a local style*/
 
-    label = lv_label_create(btn2, NULL);          /*Add a label to the button*/
+    label = lv_label_create(btn2);          /*Add a label to the button*/
     lv_label_set_text(label, "Button 2");         /*Set the labels text*/
-    lv_obj_align(label, NULL, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_center(label);
 }
 
 #endif

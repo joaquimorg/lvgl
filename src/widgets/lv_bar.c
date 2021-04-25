@@ -13,7 +13,6 @@
 #include "../draw/lv_draw.h"
 #include "../misc/lv_anim.h"
 #include "../misc/lv_math.h"
-#include <stdio.h>
 
 /*********************
  *      DEFINES
@@ -45,10 +44,10 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_bar_constructor(lv_obj_t * obj, const lv_obj_t * copy);
-static void lv_bar_destructor(lv_obj_t * obj);
-static void lv_bar_event(lv_obj_t * bar, lv_event_t e);
-static void draw_indic(lv_obj_t * bar);
+static void lv_bar_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
+static void lv_bar_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
+static void lv_bar_event(const lv_obj_class_t * class_p, lv_event_t * e);
+static void draw_indic(lv_event_t * e);
 static void lv_bar_set_value_with_anim(lv_obj_t * obj, int16_t new_value, int16_t * value_ptr,
                                        lv_bar_anim_t * anim_info, lv_anim_enable_t en);
 static void lv_bar_init_anim(lv_obj_t * bar, lv_bar_anim_t * bar_anim);
@@ -62,6 +61,8 @@ const lv_obj_class_t lv_bar_class = {
     .constructor_cb = lv_bar_constructor,
     .destructor_cb = lv_bar_destructor,
     .event_cb = lv_bar_event,
+    .width_def = LV_DPI_DEF * 2,
+    .height_def = LV_DPI_DEF / 10,
     .instance_size = sizeof(lv_bar_t),
     .base_class = &lv_obj_class
 };
@@ -74,10 +75,10 @@ const lv_obj_class_t lv_bar_class = {
  *   GLOBAL FUNCTIONS
  **********************/
 
-lv_obj_t * lv_bar_create(lv_obj_t * parent, const lv_obj_t * copy)
+lv_obj_t * lv_bar_create(lv_obj_t * parent)
 {
     LV_LOG_INFO("begin")
-    return lv_obj_create_from_class(&lv_bar_class, parent, copy);
+    return lv_obj_create_from_class(&lv_bar_class, parent);
 }
 
 /*=====================
@@ -122,7 +123,7 @@ void lv_bar_set_range(lv_obj_t * obj, int16_t min, int16_t max)
     bar->max_value = max;
     bar->min_value = min;
 
-    if(lv_bar_get_type(obj) != LV_BAR_TYPE_RANGE)
+    if(lv_bar_get_mode(obj) != LV_BAR_MODE_RANGE)
         bar->start_value = min;
 
     if(bar->cur_value > max) {
@@ -136,13 +137,13 @@ void lv_bar_set_range(lv_obj_t * obj, int16_t min, int16_t max)
     lv_obj_invalidate(obj);
 }
 
-void lv_bar_set_type(lv_obj_t * obj, lv_bar_type_t type)
+void lv_bar_set_mode(lv_obj_t * obj, lv_bar_mode_t mode)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
     lv_bar_t * bar = (lv_bar_t *)obj;
 
-    bar->type = type;
-    if(bar->type != LV_BAR_TYPE_RANGE) {
+    bar->mode = mode;
+    if(bar->mode != LV_BAR_MODE_RANGE) {
         bar->start_value = bar->min_value;
     }
 
@@ -166,7 +167,7 @@ int16_t lv_bar_get_start_value(const lv_obj_t * obj)
     LV_ASSERT_OBJ(obj, MY_CLASS);
     lv_bar_t * bar = (lv_bar_t *)obj;
 
-    if(bar->type != LV_BAR_TYPE_RANGE) return bar->min_value;
+    if(bar->mode != LV_BAR_MODE_RANGE) return bar->min_value;
 
     return LV_BAR_GET_ANIM_VALUE(bar->start_value, bar->start_value_anim);
 }
@@ -186,20 +187,21 @@ int16_t lv_bar_get_max_value(const lv_obj_t * obj)
     return bar->max_value;
 }
 
-lv_bar_type_t lv_bar_get_type(lv_obj_t * obj)
+lv_bar_mode_t lv_bar_get_mode(lv_obj_t * obj)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
     lv_bar_t * bar = (lv_bar_t *)obj;
 
-    return bar->type;
+    return bar->mode;
 }
 
 /**********************
  *   STATIC FUNCTIONS
  **********************/
 
-static void lv_bar_constructor(lv_obj_t * obj, const lv_obj_t * copy)
+static void lv_bar_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj)
 {
+    LV_UNUSED(class_p);
     LV_TRACE_OBJ_CREATE("begin");
 
     lv_bar_t * bar = (lv_bar_t *)obj;
@@ -207,42 +209,33 @@ static void lv_bar_constructor(lv_obj_t * obj, const lv_obj_t * copy)
     bar->max_value = 100;
     bar->start_value = 0;
     bar->cur_value = 0;
-    bar->type         = LV_BAR_TYPE_NORMAL;
+    bar->mode         = LV_BAR_MODE_NORMAL;
 
     lv_bar_init_anim(obj, &bar->cur_value_anim);
     lv_bar_init_anim(obj, &bar->start_value_anim);
 
-   if(copy == NULL) {
-       lv_obj_clear_flag(obj, LV_OBJ_FLAG_CHECKABLE);
-       lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
-       lv_obj_set_size(obj, LV_DPI_DEF * 2, LV_DPI_DEF / 10);
-       lv_bar_set_value(obj, 0, LV_ANIM_OFF);
-   } else {
-       lv_bar_t * copy_bar = (lv_bar_t *)copy;
-       bar->min_value   = copy_bar->min_value;
-       bar->start_value = copy_bar->start_value;
-       bar->max_value   = copy_bar->max_value;
-       bar->cur_value   = copy_bar->cur_value;
-       bar->type        = copy_bar->type;
+    lv_obj_clear_flag(obj, LV_OBJ_FLAG_CHECKABLE);
+    lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
+    lv_bar_set_value(obj, 0, LV_ANIM_OFF);
 
-       lv_bar_set_value(obj, bar->cur_value, LV_ANIM_OFF);
-   }
-   LV_TRACE_OBJ_CREATE("finished");
+    LV_TRACE_OBJ_CREATE("finished");
 }
 
-static void lv_bar_destructor(lv_obj_t * obj)
+static void lv_bar_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj)
 {
+    LV_UNUSED(class_p);
     lv_bar_t * bar = (lv_bar_t *)obj;
 
     lv_anim_del(&bar->cur_value_anim, NULL);
     lv_anim_del(&bar->start_value_anim, NULL);
 }
 
-static void draw_indic(lv_obj_t * obj)
+static void draw_indic(lv_event_t * e)
 {
+    lv_obj_t * obj = lv_event_get_target(e);
     lv_bar_t * bar = (lv_bar_t *)obj;
 
-    const lv_area_t * clip_area = lv_event_get_param();
+    const lv_area_t * clip_area = lv_event_get_param(e);
 
     lv_area_t bar_coords;
     lv_obj_get_coords(obj, &bar_coords);
@@ -258,7 +251,7 @@ static void draw_indic(lv_obj_t * obj)
     int32_t range = bar->max_value - bar->min_value;
     bool hor = barw >= barh ? true : false;
     bool sym = false;
-    if(bar->type == LV_BAR_TYPE_SYMMETRICAL && bar->min_value < 0 && bar->max_value > 0 &&
+    if(bar->mode == LV_BAR_MODE_SYMMETRICAL && bar->min_value < 0 && bar->max_value > 0 &&
        bar->start_value == bar->min_value) sym = true;
 
     /*Calculate the indicator area*/
@@ -406,16 +399,13 @@ static void draw_indic(lv_obj_t * obj)
         lv_opa_t bg_opa = draw_indic_dsc.bg_opa;
         lv_opa_t bg_img_opa = draw_indic_dsc.bg_img_opa;
         lv_opa_t border_opa = draw_indic_dsc.border_opa;
-        lv_opa_t content_opa = draw_indic_dsc.content_opa;
         draw_indic_dsc.bg_opa = LV_OPA_TRANSP;
         draw_indic_dsc.bg_img_opa = LV_OPA_TRANSP;
         draw_indic_dsc.border_opa = LV_OPA_TRANSP;
-        draw_indic_dsc.content_opa = LV_OPA_TRANSP;
         lv_draw_rect(&bar->indic_area, clip_area, &draw_indic_dsc);
         draw_indic_dsc.bg_opa = bg_opa;
         draw_indic_dsc.bg_img_opa = bg_img_opa;
         draw_indic_dsc.border_opa = border_opa;
-        draw_indic_dsc.content_opa = content_opa;
     }
 
 #if LV_DRAW_COMPLEX
@@ -433,10 +423,8 @@ static void draw_indic(lv_obj_t * obj)
     /*Draw_only the background and background image*/
     lv_opa_t shadow_opa = draw_indic_dsc.shadow_opa;
     lv_opa_t border_opa = draw_indic_dsc.border_opa;
-    lv_opa_t content_opa = draw_indic_dsc.content_opa;
     draw_indic_dsc.border_opa = LV_OPA_TRANSP;
     draw_indic_dsc.shadow_opa = LV_OPA_TRANSP;
-    draw_indic_dsc.content_opa = LV_OPA_TRANSP;
 
     /*Get the max possible indicator area. The gradient should be applied on this*/
     lv_area_t mask_indic_max_area;
@@ -464,41 +452,38 @@ static void draw_indic(lv_obj_t * obj)
     lv_draw_rect(&mask_indic_max_area, clip_area, &draw_indic_dsc);
     draw_indic_dsc.border_opa = border_opa;
     draw_indic_dsc.shadow_opa = shadow_opa;
-    draw_indic_dsc.content_opa = content_opa;
 
     /*Draw the border*/
     draw_indic_dsc.bg_opa = LV_OPA_TRANSP;
     draw_indic_dsc.bg_img_opa = LV_OPA_TRANSP;
     draw_indic_dsc.shadow_opa = LV_OPA_TRANSP;
-    draw_indic_dsc.content_opa = LV_OPA_TRANSP;
     lv_draw_rect(&bar->indic_area, clip_area, &draw_indic_dsc);
 
 #if LV_DRAW_COMPLEX
     lv_draw_mask_remove_id(mask_indic_id);
     lv_draw_mask_remove_id(mask_bg_id);
 #endif
-
-    /*When not masks draw the content*/
-    draw_indic_dsc.content_opa = content_opa;
-    draw_indic_dsc.border_opa = LV_OPA_TRANSP;
-    lv_draw_rect(&bar->indic_area, clip_area, &draw_indic_dsc);
 }
 
-static void lv_bar_event(lv_obj_t * obj, lv_event_t e)
+static void lv_bar_event(const lv_obj_class_t * class_p, lv_event_t * e)
 {
-    LV_ASSERT_OBJ(obj, MY_CLASS);
+    LV_UNUSED(class_p);
+
     lv_res_t res;
 
     /*Call the ancestor's event handler*/
-    res = lv_obj_event_base(MY_CLASS, obj, e);
+    res = lv_obj_event_base(MY_CLASS, e);
     if(res != LV_RES_OK) return;
 
-    if(e == LV_EVENT_REFR_EXT_DRAW_SIZE) {
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t * obj = lv_event_get_target(e);
+
+    if(code == LV_EVENT_REFR_EXT_DRAW_SIZE) {
         lv_coord_t indic_size;
         indic_size = lv_obj_calculate_ext_draw_size(obj, LV_PART_INDICATOR);
 
         /*Bg size is handled by lv_obj*/
-        lv_coord_t * s = lv_event_get_param();
+        lv_coord_t * s = lv_event_get_param(e);
         *s = LV_MAX(*s, indic_size);
 
         /*Calculate the indicator area*/
@@ -511,8 +496,11 @@ static void lv_bar_event(lv_obj_t * obj, lv_event_t e)
         if(pad < 0) {
             *s = LV_MAX(*s, -pad);
         }
-    } else if(e == LV_EVENT_DRAW_MAIN) {
-        draw_indic(obj);
+    } else if(code == LV_EVENT_PRESSED || code == LV_EVENT_RELEASED) {
+        lv_bar_t * bar = (lv_bar_t *)obj;
+        lv_obj_invalidate_area(obj, &bar->indic_area);
+    } else if(code == LV_EVENT_DRAW_MAIN) {
+        draw_indic(e);
     }
 }
 

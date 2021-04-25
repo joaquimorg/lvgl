@@ -36,9 +36,9 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_chart_constructor(lv_obj_t * obj, const lv_obj_t * copy);
-static void lv_chart_destructor(lv_obj_t * obj);
-static void lv_chart_event(lv_obj_t * obj, lv_event_t e);
+static void lv_chart_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
+static void lv_chart_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
+static void lv_chart_event(const lv_obj_class_t * class_p, lv_event_t * e);
 
 static void draw_div_lines(lv_obj_t * obj , const lv_area_t * mask);
 static void draw_series_line(lv_obj_t * obj, const lv_area_t * clip_area);
@@ -55,6 +55,8 @@ const lv_obj_class_t lv_chart_class = {
     .constructor_cb = lv_chart_constructor,
     .destructor_cb = lv_chart_destructor,
     .event_cb = lv_chart_event,
+    .width_def = LV_PCT(100),
+    .height_def = LV_DPI_DEF * 2,
     .instance_size = sizeof(lv_chart_t),
     .base_class = &lv_obj_class
 };
@@ -67,10 +69,10 @@ const lv_obj_class_t lv_chart_class = {
  *   GLOBAL FUNCTIONS
  **********************/
 
-lv_obj_t * lv_chart_create(lv_obj_t * parent, const lv_obj_t * copy)
+lv_obj_t * lv_chart_create(lv_obj_t * parent)
 {
     LV_LOG_INFO("begin")
-    return lv_obj_create_from_class(&lv_chart_class, parent, copy);
+    return lv_obj_create_from_class(&lv_chart_class, parent);
 }
 
 void lv_chart_set_type(lv_obj_t * obj, lv_chart_type_t type)
@@ -277,7 +279,7 @@ void lv_chart_get_point_pos_by_id(lv_obj_t * obj, lv_chart_series_t * ser, uint1
         return;
     }
 
-    lv_coord_t w = (lv_obj_get_width_fit(obj) * chart->zoom_x) >> 8;
+    lv_coord_t w = (lv_obj_get_content_width(obj) * chart->zoom_x) >> 8;
 
     if(chart->type & LV_CHART_TYPE_LINE) {
         p_out->x = (w * id) / (chart->point_cnt - 1);
@@ -303,7 +305,7 @@ void lv_chart_get_point_pos_by_id(lv_obj_t * obj, lv_chart_series_t * ser, uint1
     p_out->x += lv_obj_get_style_pad_left(obj, LV_PART_MAIN);
     p_out->x -= lv_obj_get_scroll_left(obj);
 
-    lv_coord_t h = (lv_obj_get_height_fit(obj) * chart->zoom_y) >> 8;
+    lv_coord_t h = (lv_obj_get_content_height(obj) * chart->zoom_y) >> 8;
 
     p_out->y = (int32_t)((int32_t)ser->points[id] - chart->ymin[ser->y_axis]) * h;
     p_out->y = p_out->y / (chart->ymax[ser->y_axis] - chart->ymin[ser->y_axis]);
@@ -369,7 +371,7 @@ void lv_chart_remove_series(lv_obj_t * obj, lv_chart_series_t * series)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
     LV_ASSERT_NULL(series);
-    
+
     lv_chart_t * chart    = (lv_chart_t *)obj;
     if(!series->ext_buf_assigned && series->points) lv_mem_free(series->points);
 
@@ -562,8 +564,9 @@ uint32_t lv_chart_get_pressed_point(const lv_obj_t * obj)
  *   STATIC FUNCTIONS
  **********************/
 
-static void lv_chart_constructor(lv_obj_t * obj, const lv_obj_t * copy)
+static void lv_chart_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj)
 {
+    LV_UNUSED(class_p);
     LV_TRACE_OBJ_CREATE("begin");
 
     lv_chart_t * chart = (lv_chart_t *)obj;
@@ -585,25 +588,14 @@ static void lv_chart_constructor(lv_obj_t * obj, const lv_obj_t * copy)
     chart->zoom_x      = LV_IMG_ZOOM_NONE;
     chart->zoom_y      = LV_IMG_ZOOM_NONE;
 
-    /*Init the new chart background object*/
-    if(copy == NULL) {
-        lv_obj_set_size(obj, LV_DPI_DEF * 3, LV_DPI_DEF * 2);
-    }
-    else {
-        lv_chart_t * chart_copy = (lv_chart_t*)copy;
-
-        chart->type       = chart_copy->type;
-        chart->hdiv_cnt   = chart_copy->hdiv_cnt;
-        chart->vdiv_cnt   = chart_copy->vdiv_cnt;
-        chart->point_cnt  = chart_copy->point_cnt;
-        lv_memcpy_small(chart->ymin, chart_copy->ymin, sizeof(chart->ymin));
-        lv_memcpy_small(chart->ymax, chart_copy->ymax, sizeof(chart->ymax));
-    }
     LV_TRACE_OBJ_CREATE("finished");
 }
 
-static void lv_chart_destructor(lv_obj_t * obj)
+static void lv_chart_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj)
 {
+    LV_UNUSED(class_p);
+    LV_TRACE_OBJ_CREATE("begin");
+
     lv_chart_t * chart = (lv_chart_t *)obj;
     lv_chart_series_t * ser;
     while(chart->series_ll.head) {
@@ -615,18 +607,25 @@ static void lv_chart_destructor(lv_obj_t * obj)
         lv_mem_free(ser);
     }
     _lv_ll_clear(&chart->series_ll);
+
+    LV_TRACE_OBJ_CREATE("finished");
 }
 
-static void lv_chart_event(lv_obj_t * obj, lv_event_t e)
+static void lv_chart_event(const lv_obj_class_t * class_p, lv_event_t * e)
 {
+    LV_UNUSED(class_p);
+
     /*Call the ancestor's event handler*/
     lv_res_t res;
 
-    res = lv_obj_event_base(MY_CLASS, obj, e);
+    res = lv_obj_event_base(MY_CLASS, e);
     if(res != LV_RES_OK) return;
 
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t * obj = lv_event_get_target(e);
+
     lv_chart_t * chart  = (lv_chart_t *)obj;
-    if(e == LV_EVENT_PRESSED) {
+    if(code == LV_EVENT_PRESSED) {
         lv_indev_t * indev = lv_indev_get_act();
         lv_point_t p;
         lv_indev_get_point(indev, &p);
@@ -639,19 +638,19 @@ static void lv_chart_event(lv_obj_t * obj, lv_event_t e)
             chart->pressed_point_id = id;
             lv_event_send(obj, LV_EVENT_VALUE_CHANGED, NULL);
         }
-    } else if(e == LV_EVENT_RELEASED) {
+    } else if(code == LV_EVENT_RELEASED) {
         invalidate_point(obj, chart->pressed_point_id);
         chart->pressed_point_id = LV_CHART_POINT_NONE;
-    } else if(e == LV_EVENT_REFR_EXT_DRAW_SIZE) {
-        lv_coord_t * s = lv_event_get_param();
+    } else if(code == LV_EVENT_REFR_EXT_DRAW_SIZE) {
+        lv_coord_t * s = lv_event_get_param(e);
         *s = LV_MAX4(*s, chart->tick[LV_CHART_AXIS_X].draw_size,
                      chart->tick[LV_CHART_AXIS_PRIMARY_Y].draw_size, chart->tick[LV_CHART_AXIS_SECONDARY_Y].draw_size);
-    } else if(e == LV_EVENT_GET_SELF_SIZE) {
-        lv_point_t * p = lv_event_get_param();
-        p->x = (lv_obj_get_width_fit(obj) * chart->zoom_x) >> 8;
-        p->y = (lv_obj_get_height_fit(obj) * chart->zoom_y) >> 8;
-    } else if(e == LV_EVENT_DRAW_MAIN) {
-        const lv_area_t * clip_area = lv_event_get_param();
+    } else if(code == LV_EVENT_GET_SELF_SIZE) {
+        lv_point_t * p = lv_event_get_param(e);
+        p->x = (lv_obj_get_content_width(obj) * chart->zoom_x) >> 8;
+        p->y = (lv_obj_get_content_height(obj) * chart->zoom_y) >> 8;
+    } else if(code == LV_EVENT_DRAW_MAIN) {
+        const lv_area_t * clip_area = lv_event_get_param(e);
         draw_div_lines(obj, clip_area);
         draw_axes(obj, clip_area);
 
@@ -670,17 +669,23 @@ static void draw_div_lines(lv_obj_t * obj, const lv_area_t * clip_area)
     bool mask_ret = _lv_area_intersect(&series_mask, &obj->coords, clip_area);
     if(mask_ret == false) return;
 
-    uint16_t i;
+    int16_t i;
+    int16_t i_start;
+    int16_t i_end;
     lv_point_t p1;
     lv_point_t p2;
     lv_coord_t pad_left = lv_obj_get_style_pad_left(obj, LV_PART_MAIN);
     lv_coord_t pad_top = lv_obj_get_style_pad_top(obj, LV_PART_MAIN);
-    lv_coord_t w     = (lv_obj_get_width_fit(obj) * chart->zoom_x) >> 8;
-    lv_coord_t h     = (lv_obj_get_height_fit(obj) * chart->zoom_y) >> 8;
+    lv_coord_t w     = (lv_obj_get_content_width(obj) * chart->zoom_x) >> 8;
+    lv_coord_t h     = (lv_obj_get_content_height(obj) * chart->zoom_y) >> 8;
 
     lv_draw_line_dsc_t line_dsc;
     lv_draw_line_dsc_init(&line_dsc);
     lv_obj_init_draw_line_dsc(obj, LV_PART_MAIN, &line_dsc);
+
+    lv_opa_t border_opa = lv_obj_get_style_border_opa(obj, LV_PART_MAIN);
+    lv_coord_t border_w = lv_obj_get_style_border_width(obj, LV_PART_MAIN);
+    lv_border_side_t border_side = lv_obj_get_style_border_side(obj, LV_PART_MAIN);
 
     lv_coord_t scroll_left = lv_obj_get_scroll_left(obj);
     lv_coord_t scroll_top = lv_obj_get_scroll_top(obj);
@@ -688,7 +693,15 @@ static void draw_div_lines(lv_obj_t * obj, const lv_area_t * clip_area)
         lv_coord_t y_ofs = obj->coords.y1 + pad_top - scroll_top;
         p1.x = obj->coords.x1;
         p2.x = obj->coords.x2;
-        for(i = 0; i < chart->hdiv_cnt; i++) {
+
+        i_start = 0;
+        i_end = chart->hdiv_cnt;
+        if(border_opa > LV_OPA_MIN && border_w > 0) {
+            if(border_side & LV_BORDER_SIDE_TOP) i_start++;
+            if(border_side & LV_BORDER_SIDE_BOTTOM) i_end--;
+        }
+
+        for(i = i_start; i < i_end; i++) {
             p1.y = (int32_t)((int32_t)(h - line_dsc.width) * i) / (chart->hdiv_cnt - 1);
             p1.y += y_ofs;
             p2.y = p1.y;
@@ -700,7 +713,14 @@ static void draw_div_lines(lv_obj_t * obj, const lv_area_t * clip_area)
         lv_coord_t x_ofs = obj->coords.x1 + pad_left - scroll_left;
         p1.y = obj->coords.y1;
         p2.y = obj->coords.y2;
-        for(i = 0; i < chart->vdiv_cnt; i++) {
+        i_start = 0;
+        i_end = chart->vdiv_cnt;
+        if(border_opa > LV_OPA_MIN && border_w > 0) {
+            if(border_side & LV_BORDER_SIDE_LEFT) i_start++;
+            if(border_side & LV_BORDER_SIDE_RIGHT) i_end--;
+        }
+
+        for(i = i_start; i < i_end; i++) {
             p1.x = (int32_t)((int32_t)(w - line_dsc.width) * i) / (chart->vdiv_cnt - 1);
             p1.x += x_ofs;
             p2.x = p1.x;
@@ -721,8 +741,8 @@ static void draw_series_line(lv_obj_t * obj, const lv_area_t * clip_area)
     lv_point_t p2;
     lv_coord_t pad_left = lv_obj_get_style_pad_left(obj, LV_PART_MAIN);
     lv_coord_t pad_top = lv_obj_get_style_pad_top(obj, LV_PART_MAIN);
-    lv_coord_t w     = (lv_obj_get_width_fit(obj) * chart->zoom_x) >> 8;
-    lv_coord_t h     = (lv_obj_get_height_fit(obj) * chart->zoom_y) >> 8;
+    lv_coord_t w     = (lv_obj_get_content_width(obj) * chart->zoom_x) >> 8;
+    lv_coord_t h     = (lv_obj_get_content_height(obj) * chart->zoom_y) >> 8;
     lv_coord_t x_ofs = obj->coords.x1 + pad_left - lv_obj_get_scroll_left(obj);
     lv_coord_t y_ofs = obj->coords.y1 + pad_top - lv_obj_get_scroll_top(obj);
     lv_chart_series_t * ser;
@@ -731,29 +751,19 @@ static void draw_series_line(lv_obj_t * obj, const lv_area_t * clip_area)
     bool mask_ret = _lv_area_intersect(&series_mask, &obj->coords, clip_area);
     if(mask_ret == false) return;
 
-    lv_state_t state_ori = obj->state;
-    obj->state = LV_STATE_DEFAULT;
-    obj->skip_trans = 1;
     lv_draw_line_dsc_t line_dsc_default;
     lv_draw_line_dsc_init(&line_dsc_default);
     lv_obj_init_draw_line_dsc(obj, LV_PART_ITEMS, &line_dsc_default);
 
     lv_draw_rect_dsc_t point_dsc_default;
     lv_draw_rect_dsc_init(&point_dsc_default);
-    point_dsc_default.radius = LV_RADIUS_CIRCLE;
+    lv_obj_init_draw_rect_dsc(obj, LV_PART_INDICATOR, &point_dsc_default);
 
-    lv_coord_t point_size = lv_obj_get_style_size(obj, LV_PART_ITEMS);
-
-    obj->state = LV_STATE_PRESSED;
-    lv_coord_t point_size_pr = lv_obj_get_style_size(obj, LV_PART_ITEMS);
-
-    obj->state = state_ori;
-    obj->skip_trans = 0;
-
-    lv_coord_t point_size_act;
+    lv_coord_t point_w = lv_obj_get_style_width(obj, LV_PART_INDICATOR) / 2;
+    lv_coord_t point_h = lv_obj_get_style_height(obj, LV_PART_INDICATOR) / 2;
 
     /*Do not bother with line ending is the point will over it*/
-    if(point_size > line_dsc_default.width / 2) line_dsc_default.raw_end = 1;
+    if(LV_MIN(point_w, point_h) > line_dsc_default.width / 2) line_dsc_default.raw_end = 1;
     if(line_dsc_default.width == 1) line_dsc_default.raw_end = 1;
 
     /*If there are mire points than pixels draw only vertical lines*/
@@ -790,9 +800,7 @@ static void draw_series_line(lv_obj_t * obj, const lv_area_t * clip_area)
             p1.x = p2.x;
             p1.y = p2.y;
 
-            point_size_act = p_act == chart->pressed_point_id ? point_size_pr : point_size;
-
-            if(p1.x > clip_area->x2 + point_size_act + 1) break;
+            if(p1.x > clip_area->x2 + point_w + 1) break;
             p2.x = ((w * i) / (chart->point_cnt - 1)) + x_ofs;
 
             p_act = (start_point + i) % chart->point_cnt;
@@ -801,7 +809,7 @@ static void draw_series_line(lv_obj_t * obj, const lv_area_t * clip_area)
             y_tmp = y_tmp / (chart->ymax[ser->y_axis] - chart->ymin[ser->y_axis]);
             p2.y  = h - y_tmp + y_ofs;
 
-            if(p2.x < clip_area->x1 - point_size_act - 1) {
+            if(p2.x < clip_area->x1 - point_w - 1) {
                 p_prev = p_act;
                 continue;
             }
@@ -828,10 +836,10 @@ static void draw_series_line(lv_obj_t * obj, const lv_area_t * clip_area)
                     }
                 } else {
                     lv_area_t point_area;
-                    point_area.x1 = p1.x - point_size_act;
-                    point_area.x2 = p1.x + point_size_act;
-                    point_area.y1 = p1.y - point_size_act;
-                    point_area.y2 = p1.y + point_size_act;
+                    point_area.x1 = p1.x - point_w;
+                    point_area.x2 = p1.x + point_w;
+                    point_area.y1 = p1.y - point_h;
+                    point_area.y2 = p1.y + point_h;
 
                     dsc.id = i - 1;
                     dsc.p1 = ser->points[p_prev] != LV_CHART_POINT_NONE ? &p1 : NULL;
@@ -845,7 +853,7 @@ static void draw_series_line(lv_obj_t * obj, const lv_area_t * clip_area)
                         lv_draw_line(&p1, &p2, &series_mask, &line_dsc_default);
                     }
 
-                    if(point_size_act && ser->points[p_act] != LV_CHART_POINT_NONE) {
+                    if(point_w && point_h && ser->points[p_act] != LV_CHART_POINT_NONE) {
                         lv_draw_rect(&point_area, &series_mask, &point_dsc_default);
                     }
 
@@ -857,15 +865,14 @@ static void draw_series_line(lv_obj_t * obj, const lv_area_t * clip_area)
         }
 
         /*Draw the last point*/
-        point_size_act = p_act == chart->pressed_point_id ? point_size_pr : point_size;
-        if(!crowded_mode && point_size_act && i == chart->point_cnt) {
+        if(!crowded_mode && i == chart->point_cnt) {
 
             if(ser->points[p_act] != LV_CHART_POINT_NONE) {
                 lv_area_t point_area;
-                point_area.x1 = p2.x - point_size_act;
-                point_area.x2 = p2.x + point_size_act;
-                point_area.y1 = p2.y - point_size_act;
-                point_area.y2 = p2.y + point_size_act;
+                point_area.x1 = p2.x - point_w;
+                point_area.x2 = p2.x + point_w;
+                point_area.y1 = p2.y - point_h;
+                point_area.y2 = p2.y + point_h;
 
                 dsc.id = i - 1;
                 dsc.p1 = NULL;
@@ -891,8 +898,8 @@ static void draw_series_bar(lv_obj_t * obj, const lv_area_t * clip_area)
     lv_area_t col_a;
     lv_coord_t pad_left = lv_obj_get_style_pad_left(obj, LV_PART_MAIN);
     lv_coord_t pad_top = lv_obj_get_style_pad_top(obj, LV_PART_MAIN);
-    lv_coord_t w     = (lv_obj_get_width_fit(obj) * chart->zoom_x) >> 8;
-    lv_coord_t h     = (lv_obj_get_height_fit(obj) * chart->zoom_y) >> 8;
+    lv_coord_t w     = (lv_obj_get_content_width(obj) * chart->zoom_x) >> 8;
+    lv_coord_t h     = (lv_obj_get_content_height(obj) * chart->zoom_y) >> 8;
     int32_t y_tmp;
     lv_chart_series_t * ser;
     uint32_t ser_cnt = _lv_ll_get_len(&chart->series_ll);
@@ -918,17 +925,17 @@ static void draw_series_bar(lv_obj_t * obj, const lv_area_t * clip_area)
 
     lv_obj_draw_dsc_t dsc;
     lv_obj_draw_dsc_init(&dsc, &series_mask);
-	dsc.part = LV_PART_ITEMS;
+    dsc.part = LV_PART_ITEMS;
 
     /*Go through all points*/
     for(i = 0; i < chart->point_cnt; i++) {
         lv_coord_t x_act = (int32_t)((int32_t)(w + block_gap) * i) / (chart->point_cnt) + obj->coords.x1 + x_ofs;
 
-		dsc.id = i;
+        dsc.id = i;
 
         /*Draw the current point of all data line*/
         _LV_LL_READ_BACK(&chart->series_ll, ser) {
-        	if (ser->hidden) continue;
+            if (ser->hidden) continue;
             lv_coord_t start_point = chart->update_mode == LV_CHART_UPDATE_MODE_SHIFT ? ser->last_point : 0;
 
             col_a.x1 = x_act;
@@ -946,13 +953,13 @@ static void draw_series_bar(lv_obj_t * obj, const lv_area_t * clip_area)
             col_a.y1         = h - y_tmp + obj->coords.y1 + y_ofs;
 
             if(ser->points[p_act] != LV_CHART_POINT_NONE) {
-            	dsc.draw_area = &col_a;
-            	dsc.rect_dsc = &col_dsc;
-            	dsc.sub_part_ptr = ser;
+                dsc.draw_area = &col_a;
+                dsc.rect_dsc = &col_dsc;
+                dsc.sub_part_ptr = ser;
                 dsc.value = ser->points[p_act];
-            	lv_event_send(obj, LV_EVENT_DRAW_PART_BEGIN, &dsc);
+                lv_event_send(obj, LV_EVENT_DRAW_PART_BEGIN, &dsc);
                 lv_draw_rect(&col_a, &series_mask, &col_dsc);
-            	lv_event_send(obj, LV_EVENT_DRAW_PART_END, &dsc);
+                lv_event_send(obj, LV_EVENT_DRAW_PART_END, &dsc);
             }
         }
     }
@@ -981,10 +988,8 @@ static void draw_cursors(lv_obj_t * obj, const lv_area_t * clip_area)
     lv_draw_line_dsc_t line_dsc_tmp;
     lv_draw_rect_dsc_t point_dsc_tmp;
 
-    lv_coord_t point_radius = lv_obj_get_style_size(obj, LV_PART_CURSOR);
-
-    /*Do not bother with line ending is the point will over it*/
-    if(point_radius > line_dsc_ori.width / 2) line_dsc_ori.raw_end = 1;
+    lv_coord_t point_w = lv_obj_get_style_width(obj, LV_PART_CURSOR) / 2;
+    lv_coord_t point_h = lv_obj_get_style_width(obj, LV_PART_CURSOR) / 2;
 
     lv_obj_draw_dsc_t dsc;
     lv_obj_draw_dsc_init(&dsc, clip_area);
@@ -1028,13 +1033,13 @@ static void draw_cursors(lv_obj_t * obj, const lv_area_t * clip_area)
             lv_event_send(obj, LV_EVENT_DRAW_PART_END, &dsc);
         }
 
-        if(point_radius) {
+        if(point_w && point_h) {
             lv_area_t point_area;
 
-            point_area.x1 = cx - point_radius;
-            point_area.x2 = cx + point_radius;
-            point_area.y1 = cy - point_radius;
-            point_area.y2 = cy + point_radius;
+            point_area.x1 = cx - point_w;
+            point_area.x2 = cx + point_w;
+            point_area.y1 = cy - point_h;
+            point_area.y2 = cy + point_h;
 
             dsc.draw_area = &point_area;
             dsc.p1 = NULL;
@@ -1062,7 +1067,7 @@ static void draw_y_ticks(lv_obj_t * obj, const lv_area_t * clip_area, lv_chart_a
     lv_point_t p2;
 
     lv_coord_t pad_top = lv_obj_get_style_pad_top(obj, LV_PART_MAIN);
-    lv_coord_t h     = (lv_obj_get_height_fit(obj) * chart->zoom_y) >> 8;
+    lv_coord_t h     = (lv_obj_get_content_height(obj) * chart->zoom_y) >> 8;
     lv_coord_t y_ofs = obj->coords.y1 + pad_top - lv_obj_get_scroll_top(obj);
 
     lv_coord_t label_gap;
@@ -1169,7 +1174,7 @@ static void draw_x_ticks(lv_obj_t * obj, const lv_area_t * clip_area)
     lv_point_t p2;
 
     lv_coord_t pad_left = lv_obj_get_style_pad_left(obj, LV_PART_MAIN);
-    lv_coord_t w     = (lv_obj_get_width_fit(obj) * chart->zoom_x) >> 8;
+    lv_coord_t w     = (lv_obj_get_content_width(obj) * chart->zoom_x) >> 8;
 
     lv_coord_t x_ofs = obj->coords.x1 + pad_left - lv_obj_get_scroll_left(obj);
     lv_coord_t y_ofs = obj->coords.y2;
@@ -1262,7 +1267,7 @@ static void draw_axes(lv_obj_t * obj, const lv_area_t * mask)
 static uint32_t get_index_from_x(lv_obj_t * obj, lv_coord_t x)
 {
     lv_chart_t * chart  = (lv_chart_t *)obj;
-    lv_coord_t w = (lv_obj_get_width_fit(obj) * chart->zoom_x) >> 8;
+    lv_coord_t w = (lv_obj_get_content_width(obj) * chart->zoom_x) >> 8;
     lv_coord_t pad_left = lv_obj_get_style_pad_left(obj, LV_PART_MAIN);
     x-= pad_left;
 
@@ -1279,27 +1284,27 @@ static void invalidate_point(lv_obj_t * obj, uint16_t i)
     lv_chart_t * chart  = (lv_chart_t *)obj;
     if(i >= chart->point_cnt) return;
 
-    lv_coord_t w  = (lv_obj_get_width_fit(obj) * chart->zoom_x) >> 8;
+    lv_coord_t w  = (lv_obj_get_content_width(obj) * chart->zoom_x) >> 8;
     lv_coord_t scroll_left = lv_obj_get_scroll_left(obj);
     if(chart->type == LV_CHART_TYPE_LINE) {
         lv_coord_t x_ofs = obj->coords.x1 + lv_obj_get_style_pad_left(obj, LV_PART_MAIN) - scroll_left;
         lv_coord_t line_width = lv_obj_get_style_line_width(obj, LV_PART_ITEMS);
-        lv_coord_t point_radius = lv_obj_get_style_size(obj, LV_PART_ITEMS);
+        lv_coord_t point_w = lv_obj_get_style_width(obj, LV_PART_INDICATOR);
 
         lv_area_t coords;
         lv_area_copy(&coords, &obj->coords);
-        coords.y1 -= line_width + point_radius;
-        coords.y2 += line_width + point_radius;
+        coords.y1 -= line_width + point_w;
+        coords.y2 += line_width + point_w;
 
         if(i < chart->point_cnt - 1) {
-            coords.x1 = ((w * i) / (chart->point_cnt - 1)) + x_ofs - line_width - point_radius;
-            coords.x2 = ((w * (i + 1)) / (chart->point_cnt - 1)) + x_ofs + line_width + point_radius;
+            coords.x1 = ((w * i) / (chart->point_cnt - 1)) + x_ofs - line_width - point_w;
+            coords.x2 = ((w * (i + 1)) / (chart->point_cnt - 1)) + x_ofs + line_width + point_w;
             lv_obj_invalidate_area(obj, &coords);
         }
 
         if(i > 0) {
-            coords.x1 = ((w * (i - 1)) / (chart->point_cnt - 1)) + x_ofs - line_width - point_radius;
-            coords.x2 = ((w * i) / (chart->point_cnt - 1)) + x_ofs + line_width + point_radius;
+            coords.x1 = ((w * (i - 1)) / (chart->point_cnt - 1)) + x_ofs - line_width - point_w;
+            coords.x2 = ((w * i) / (chart->point_cnt - 1)) + x_ofs + line_width + point_w;
             lv_obj_invalidate_area(obj, &coords);
         }
     }

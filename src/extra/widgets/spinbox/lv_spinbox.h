@@ -53,7 +53,6 @@ extern const lv_obj_class_t lv_spinbox_class;
 /**
  * Create a spinbox objects
  * @param par pointer to an object, it will be the parent of the new spinbox
- * @param copy pointer to a spinbox object, if not NULL then the new object will be copied from it
  * @return pointer to the created spinbox
  */
 lv_obj_t * lv_spinbox_create(lv_obj_t * parent);
@@ -99,13 +98,6 @@ void lv_spinbox_set_step(lv_obj_t * obj, uint32_t step);
  * @param range_max minimum value, inclusive
  */
 void lv_spinbox_set_range(lv_obj_t * obj, int32_t range_min, int32_t range_max);
-
-/**
- * Set spinbox left padding in digits count (added between sign and first digit)
- * @param spinbox pointer to spinbox
- * @param cb Callback function called on value change event
- */
-void lv_spinbox_set_padding_left(lv_obj_t * obj, uint8_t padding);
 
 /*=====================
  * Getter functions

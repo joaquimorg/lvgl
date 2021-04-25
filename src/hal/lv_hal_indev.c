@@ -62,7 +62,7 @@ void lv_indev_drv_init(lv_indev_drv_t * driver)
     driver->scroll_limit         = LV_INDEV_DEF_SCROLL_LIMIT;
     driver->scroll_throw         = LV_INDEV_DEF_SCROLL_THROW;
     driver->long_press_time      = LV_INDEV_DEF_LONG_PRESS_TIME;
-    driver->long_press_rep_time  = LV_INDEV_DEF_LONG_PRESS_REP_TIME;
+    driver->long_press_repeat_time  = LV_INDEV_DEF_LONG_PRESS_REP_TIME;
     driver->gesture_limit        = LV_INDEV_DEF_GESTURE_LIMIT;
     driver->gesture_min_velocity = LV_INDEV_DEF_GESTURE_MIN_VELOCITY;
 }
@@ -135,11 +135,11 @@ bool _lv_indev_read(lv_indev_t * indev, lv_indev_data_t * data)
 
     lv_memset_00(data, sizeof(lv_indev_data_t));
 
-    /*For touchpad sometimes users don't set the last pressed coordinate on release.
-     *So be sure a coordinates are initialized to the last point*/
+    /* For touchpad sometimes users don't set the last pressed coordinate on release.
+     * So be sure a coordinates are initialized to the last point */
     if(indev->driver->type == LV_INDEV_TYPE_POINTER) {
-        data->point.x = indev->proc.types.pointer.act_point.x;
-        data->point.y = indev->proc.types.pointer.act_point.y;
+        data->point.x = indev->proc.types.pointer.last_raw_point.x;
+        data->point.y = indev->proc.types.pointer.last_raw_point.y;
     }
     /*Similarly set at least the last key in case of the user doesn't set it on release*/
     else if(indev->driver->type == LV_INDEV_TYPE_KEYPAD) {

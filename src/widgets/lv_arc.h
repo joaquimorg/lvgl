@@ -61,10 +61,9 @@ extern const lv_obj_class_t lv_arc_class;
 /**
  * Create a arc objects
  * @param par pointer to an object, it will be the parent of the new arc
- * @param copy pointer to a arc object, if not NULL then the new object will be copied from it
  * @return pointer to the created arc
  */
-lv_obj_t * lv_arc_create(lv_obj_t * par, const lv_obj_t * copy);
+lv_obj_t * lv_arc_create(lv_obj_t * parent);
 
 /*======================
  * Add/remove functions
@@ -155,13 +154,6 @@ void lv_arc_set_range(lv_obj_t * arc, int16_t min, int16_t max);
  */
 void lv_arc_set_chg_rate(lv_obj_t * arc, uint16_t threshold);
 
-/**
- * Set whether the arc is adjustable.
- * @param arc pointer to a arc object
- * @param adjustable whether the arc has a knob that can be dragged
- */
-void lv_arc_set_adjustable(lv_obj_t * arc, bool adjustable);
-
 /*=====================
  * Getter functions
  *====================*/
@@ -221,13 +213,6 @@ int16_t lv_arc_get_max_value(const lv_obj_t * obj);
  * @return arc type
  */
 lv_arc_type_t lv_arc_get_type(const lv_obj_t * obj);
-
-/**
- * Get whether the arc is adjustable.
- * @param arc pointer to a arc object
- * @return whether the arc has a knob that can be dragged
- */
-bool lv_arc_get_adjustable(lv_obj_t * obj);
 
 /*=====================
  * Other functions

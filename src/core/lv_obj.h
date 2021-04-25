@@ -27,84 +27,12 @@ extern "C" {
 /*********************
  *      DEFINES
  *********************/
-#define _LV_EVENT_FLAG_BUBBLED 0x80
 
 /**********************
  *      TYPEDEFS
  **********************/
 
 struct _lv_obj_t;
-
-/*---------------------
- *       EVENTS
- *---------------------*/
-
-/**
- * Type of event being sent to the object.
- */
-typedef enum {
-    /** Input device events*/
-    LV_EVENT_PRESSED,             /**< The object has been pressed*/
-    LV_EVENT_PRESSING,            /**< The object is being pressed (called continuously while pressing)*/
-    LV_EVENT_PRESS_LOST,          /**< User is still being pressed but slid cursor/finger off of the object */
-    LV_EVENT_SHORT_CLICKED,       /**< User pressed object for a short period of time, then released it. Not called if scrolled.*/
-    LV_EVENT_LONG_PRESSED,        /**< Object has been pressed for at least `LV_INDEV_LONG_PRESS_TIME`.  Not called if scrolled.*/
-    LV_EVENT_LONG_PRESSED_REPEAT, /**< Called after `LV_INDEV_LONG_PRESS_TIME` in every `LV_INDEV_LONG_PRESS_REP_TIME` ms.  Not called if scrolled.*/
-    LV_EVENT_CLICKED,             /**< Called on release if not scrolled (regardless to long press)*/
-    LV_EVENT_RELEASED,            /**< Called in every cases when the object has been released*/
-    LV_EVENT_SCROLL_BEGIN,        /**< Scrolling begins*/
-    LV_EVENT_SCROLL_END,          /**< Scrolling ends*/
-    LV_EVENT_SCROLL,              /**< Scrolling*/
-    LV_EVENT_GESTURE,             /**< Gesture detected*/
-    LV_EVENT_KEY,                 /**< A key is sent to the object*/
-    LV_EVENT_FOCUSED,             /**< Focused */
-    LV_EVENT_DEFOCUSED,           /**< Defocused*/
-    LV_EVENT_LEAVE,               /**< Defocused but still selected*/
-    LV_EVENT_HIT_TEST,            /**< Perform advanced hit-testing*/
-
-    /** Drawing events*/
-    LV_EVENT_COVER_CHECK,        /**< Check if the object fully covers an area*/
-    LV_EVENT_REFR_EXT_DRAW_SIZE, /**< Get the required extra draw area around the object (e.g. for shadow)*/
-    LV_EVENT_DRAW_MAIN_BEGIN,    /**< Starting the main drawing phase*/
-    LV_EVENT_DRAW_MAIN,          /**< Perform the main drawing*/
-    LV_EVENT_DRAW_MAIN_END,      /**< Finishing the main drawing phase*/
-    LV_EVENT_DRAW_POST_BEGIN,    /**< Starting the post draw phase (when all children are drawn)*/
-    LV_EVENT_DRAW_POST,          /**< Perform the post draw phase (when all children are drawn)*/
-    LV_EVENT_DRAW_POST_END,      /**< Finishing the post draw phase (when all children are drawn)*/
-    LV_EVENT_DRAW_PART_BEGIN,    /**< Starting to draw a part*/
-    LV_EVENT_DRAW_PART_END,      /**< Finishing to draw a part*/
-
-    /** General events*/
-    LV_EVENT_VALUE_CHANGED,       /**< The object's value has changed (i.e. slider moved)*/
-    LV_EVENT_INSERT,              /**< A text is inserted to the object*/
-    LV_EVENT_REFRESH,             /**< Notify the object to refresh something on it (for the user)*/
-    LV_EVENT_DELETE,              /**< Object is being deleted*/
-    LV_EVENT_READY,               /**< A process has finished*/
-    LV_EVENT_CANCEL,              /**< A process has been cancelled */
-    LV_EVENT_CHILD_CHANGED,       /**< Child was removed/added*/
-    LV_EVENT_COORD_CHANGED,       /**< Object coordinates/size have changed*/
-    LV_EVENT_STYLE_CHANGED,       /**< Object's style has changed*/
-    LV_EVENT_BASE_DIR_CHANGED,    /**< The base dir has changed*/
-    LV_EVENT_GET_SELF_SIZE,       /**< Get the internal size of a widget*/
-
-    _LV_EVENT_LAST /** Number of default events*/
-}lv_event_t;
-
-/**
- * @brief Event callback.
- * Events are used to notify the user of some action being taken on the object.
- * For details, see ::lv_event_t.
- */
-typedef void (*lv_event_cb_t)(struct _lv_obj_t * obj, lv_event_t event);
-
-typedef struct {
-    lv_event_cb_t cb;
-    void * user_data;
-}lv_event_dsc_t;
-
-/*---------------------
- *       EVENTS
- *---------------------*/
 
 /**
  * Possible states of a widget.
@@ -138,28 +66,21 @@ typedef uint16_t lv_state_t;
  * Note every part is used by every widget
  */
 enum {
-    LV_PART_MAIN,        /**< A background like rectangle*/
-    LV_PART_SCROLLBAR,   /**< The scrollbar(s)*/
-    LV_PART_INDICATOR,   /**< Indicator, e.g. for slider, bar, switch, or the tick box of the checkbox*/
-    LV_PART_KNOB,        /**< Like handle to grab to adjust the value*/
-    LV_PART_SELECTED,    /**< Indicate the currently selected option or section*/
-    LV_PART_ITEMS,       /**< Used if the widget has multiple similar elements (e.g. tabel cells)*/
-    LV_PART_TICKS,       /**< Ticks on scale e.g. for a chart or meter*/
-    LV_PART_CURSOR,      /**< Mark a specific place e.g. for text area's cursor or on a chart*/
+    LV_PART_MAIN         = 0x000000,   /**< A background like rectangle*/
+    LV_PART_SCROLLBAR    = 0x010000,   /**< The scrollbar(s)*/
+    LV_PART_INDICATOR    = 0x020000,   /**< Indicator, e.g. for slider, bar, switch, or the tick box of the checkbox*/
+    LV_PART_KNOB         = 0x030000,   /**< Like handle to grab to adjust the value*/
+    LV_PART_SELECTED     = 0x040000,   /**< Indicate the currently selected option or section*/
+    LV_PART_ITEMS        = 0x050000,   /**< Used if the widget has multiple similar elements (e.g. tabel cells)*/
+    LV_PART_TICKS        = 0x060000,   /**< Ticks on scale e.g. for a chart or meter*/
+    LV_PART_CURSOR       = 0x070000,   /**< Mark a specific place e.g. for text area's cursor or on a chart*/
 
-    LV_PART_CUSTOM_1 = 0x40,    /**< Extension point for custom widgets*/
-    LV_PART_CUSTOM_2,           /**< Extension point for custom widgets*/
-    LV_PART_CUSTOM_3,           /**< Extension point for custom widgets*/
-    LV_PART_CUSTOM_4,           /**< Extension point for custom widgets*/
-    LV_PART_CUSTOM_5,           /**< Extension point for custom widgets*/
-    LV_PART_CUSTOM_6,           /**< Extension point for custom widgets*/
-    LV_PART_CUSTOM_7,           /**< Extension point for custom widgets*/
-    LV_PART_CUSTOM_8,           /**< Extension point for custom widgets*/
+    LV_PART_CUSTOM_FIRST = 0x800000,    /**< Extension point for custom widgets*/
 
-    LV_PART_ANY = 0xFF,  /**< Special value can be used in some functions to target all parts*/
+    LV_PART_ANY          = 0xFF0000,    /**< Special value can be used in some functions to target all parts*/
 };
 
-typedef uint16_t lv_part_t;
+typedef uint32_t lv_part_t;
 
 /**
  * On/Off features controlling the object's behavior.
@@ -204,6 +125,7 @@ typedef uint32_t lv_obj_flag_t;
 #include "lv_obj_style.h"
 #include "lv_obj_draw.h"
 #include "lv_obj_class.h"
+#include "lv_event.h"
 #include "lv_group.h"
 
 /**
@@ -220,9 +142,7 @@ typedef struct {
     uint32_t child_cnt;                 /**< Number of children*/
     lv_group_t * group_p;
 
-    const lv_layout_dsc_t * layout_dsc; /**< Pointer to the layout descriptor*/
-
-    lv_event_dsc_t * event_dsc;             /**< Dynamically allocated event callback and user data array*/
+    struct _lv_event_dsc_t * event_dsc;             /**< Dynamically allocated event callback and user data array*/
     lv_point_t scroll;                      /**< The current X/Y scroll offset*/
 
     uint8_t ext_click_pad;      /**< Extra click padding in all direction*/
@@ -236,21 +156,23 @@ typedef struct {
     uint8_t event_dsc_cnt;           /**< Number of event callabcks stored in `event_cb` array*/
 }lv_obj_spec_attr_t;
 
-typedef struct _lv_obj_t{
+typedef struct _lv_obj_t {
     const lv_obj_class_t * class_p;
     struct _lv_obj_t * parent;
     lv_obj_spec_attr_t * spec_attr;
     lv_obj_style_t * styles;
+#if LV_USE_USER_DATA
+    void * user_data;
+#endif
     lv_area_t coords;
-    lv_coord_t x_set;
-    lv_coord_t y_set;
-    lv_coord_t w_set;
-    lv_coord_t h_set;
     lv_obj_flag_t flags;
     lv_state_t state;
-    uint8_t layout_inv :1;
-    uint8_t skip_trans :1;
-    uint8_t style_cnt  :6;
+    uint16_t layout_inv :1;
+    uint16_t scr_layout_inv :1;
+    uint16_t skip_trans :1;
+    uint16_t style_cnt  :6;
+    uint16_t h_layout   :1;
+    uint16_t w_layout   :1;
 }lv_obj_t;
 
 
@@ -259,9 +181,17 @@ typedef struct {
     bool result;
 } lv_hit_test_info_t;
 
+/**
+ * Used as the event parameter of ::LV_EVENT_COVER_CHECK to check if an area is covered by the object or not.
+ * `res` should be set like this:
+ *   - If there is a draw mask on the object set to ::LV_DRAW_RES_MASKED
+ *   - If there is no draw mask but the object simply not covers the area and `res` is not set to ::LV_DRAW_RES_MASKED set to ::LV_DRAW_RES_NOT_COVER
+ *     E.g. `if(cover == false && info->res != LV_DRAW_RES_MASKED) info->res = LV_DRAW_RES_NOT_COVER;`
+ *   - If the area is fully covered by the object leave `res` unchanged.
+ */
 typedef struct {
-    lv_draw_res_t res;
-    const lv_area_t * clip_area;
+    lv_draw_res_t res;              /**< Set to ::LV_DRAW_RES_NOT_COVER or ::LV_DRAW_RES_MASKED. */
+    const lv_area_t * area;         /**< The area to check */
 } lv_cover_check_info_t;
 
 /**********************
@@ -287,59 +217,10 @@ void lv_deinit(void);
 /**
  * Create a base object (a rectangle)
  * @param parent    pointer to a parent object. If NULL then a screen will be created.
- * @param copy      DEPRECATED, will be removed in v9.
- *                  Pointer to an other base object to copy.
  * @return pointer to the new object
  */
-lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy);
+lv_obj_t * lv_obj_create(lv_obj_t * parent);
 
-
-/*---------------------
- * Event/Signal sending
- *---------------------*/
-
-/**
- * Send an event to the object
- * @param obj pointer to an object
- * @param event the type of the event from `lv_event_t`
- * @param param arbitrary data depending on the object type and the event. (Usually `NULL`)
- * @return LV_RES_OK: `obj` was not deleted in the event; LV_RES_INV: `obj` was deleted in the event
- */
-lv_res_t lv_event_send(lv_obj_t * obj, lv_event_t event, void * param);
-
-lv_res_t lv_obj_event_base(const lv_obj_class_t * class_p, struct _lv_obj_t * obj, lv_event_t e);
-
-/**
- * Get the `param` parameter of the current event
- * @return      the `param` parameter
- */
-void * lv_event_get_param(void);
-
-/**
- * Get the user data of the event callback. (Set when the callback is registered)
- * @return      the user data parameter
- */
-void * lv_event_get_user_data(void);
-
-/**
- * Register a new, custom event ID.
- * It can be used the same way as e.g. `LV_EVENT_CLICKED` to send custom events
- * @return      the new event id
- * @example
- * uint32_t LV_EVENT_MINE = 0;
- * ...
- * e = lv_event_register_id();
- * ...
- * lv_event_send(obj, LV_EVENT_MINE, &some_data);
- */
-uint32_t lv_event_register_id(void);
-
-/**
- * Nested events can be called and one of them might belong to an object that is being deleted.
- * Mark this object's `event_temp_data` deleted to know that it's `lv_event_send` should return `LV_RES_INV`
- * @param obj pointer to an obejct to mark as deleted
- */
-void _lv_event_mark_deleted(lv_obj_t * obj);
 
 /*=====================
  * Setter functions
@@ -377,33 +258,11 @@ void lv_obj_add_state(lv_obj_t * obj, lv_state_t state);
 void lv_obj_clear_state(lv_obj_t * obj, lv_state_t state);
 
 /**
- * Add an event handler function for an object.
- * Used by the user to react on event which happens with the object.
- * An object can have multiple event handler. They will be called in the same order as they were added.
- * @param obj       pointer to an object
- * @param event_cb  the new event function
- * @param user_data custom data data will be available in `event_cb`
- */
-void lv_obj_add_event_cb(lv_obj_t * obj, lv_event_cb_t event_cb, void * user_data);
-
-/**
- * Remove an event handler function for an object.
- * Used by the user to react on event which happens with the object.
- * An object can have multiple event handler. They will be called in the same order as they were added.
- * @param obj       pointer to an object
- * @param event_cb  the event function to remove
- * @param user_data if NULL, remove the first event handler with the same cb, otherwise remove the first event handler with the same cb and user_data
- * @return true if any event handlers were removed
- */
-bool lv_obj_remove_event_cb(lv_obj_t * obj, lv_event_cb_t event_cb, void * user_data);
-
-/**
  * Set the base direction of the object
  * @param obj   pointer to an object
  * @param dir   the new base direction. `LV_BIDI_DIR_LTR/RTL/AUTO/INHERIT`
  */
 void lv_obj_set_base_dir(lv_obj_t * obj, lv_bidi_dir_t dir);
-
 
 /*=======================
  * Getter functions
@@ -449,14 +308,6 @@ lv_state_t lv_obj_get_state(const lv_obj_t * obj);
 bool lv_obj_has_state(const lv_obj_t * obj, lv_state_t state);
 
 /**
- * Get the event function of an object
- * @param obj   pointer to an object
- * @param id    the index of the event callback. 0: the firstly added
- * @return      the event descriptor
- */
-lv_event_dsc_t * lv_obj_get_event_dsc(const lv_obj_t * obj, uint32_t id);
-
-/**
  * Get the group of the object
  * @param       obj pointer to an object
  * @return      the pointer to group of the object
@@ -489,12 +340,20 @@ lv_obj_t * lv_obj_get_focused_obj(const lv_obj_t * obj);
 bool lv_obj_check_type(const lv_obj_t * obj, const lv_obj_class_t * class_p);
 
 /**
- * Check if any object has a given type
+ * Check if any object has a given class (type).
+ * It checks the ancestor classes too.
  * @param obj       pointer to an object
- * @param obj_type  type of the object. (e.g. "lv_btn")
- * @return          true: valid
+ * @param class_p   a class to check (e.g. `lv_slider_class`)
+ * @return          true: `obj` has the given class
  */
 bool lv_obj_has_class(const lv_obj_t * obj, const lv_obj_class_t * class_p);
+
+/**
+ * Get the class (type) of the object
+ * @param obj       pointer to an object
+ * @return the class (type) of the object
+ */
+const lv_obj_class_t * lv_obj_get_class(const lv_obj_t * obj);
 
 /**
  * Check if any object is still "alive", and part of the hierarchy

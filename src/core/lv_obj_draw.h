@@ -27,12 +27,10 @@ struct _lv_obj_t;
 
 /** Design results*/
 typedef enum {
-    LV_DRAW_RES_OK,          /**< Draw ready*/
     LV_DRAW_RES_COVER,       /**< Returned on `LV_DRAW_COVER_CHK` if the areas is fully covered*/
     LV_DRAW_RES_NOT_COVER,   /**< Returned on `LV_DRAW_COVER_CHK` if the areas is not covered*/
     LV_DRAW_RES_MASKED,      /**< Returned on `LV_DRAW_COVER_CHK` if the areas is masked out (children also not cover)*/
 }lv_draw_res_t;
-
 
 typedef struct
 {
@@ -49,7 +47,7 @@ typedef struct
     char text[16];
     int32_t value;
     uint32_t id;
-    uint32_t part   :8;
+    uint32_t part;
     const void * sub_part_ptr;
 }lv_obj_draw_dsc_t;
 
@@ -67,7 +65,7 @@ typedef struct
  * @note Only the relevant fields will be set.
  *       E.g. if `border width == 0` the other border properties won't be evaluated.
  */
-void lv_obj_init_draw_rect_dsc(struct _lv_obj_t * obj, uint8_t part, lv_draw_rect_dsc_t * draw_dsc);
+void lv_obj_init_draw_rect_dsc(struct _lv_obj_t * obj, uint32_t part, lv_draw_rect_dsc_t * draw_dsc);
 
 /**
  * Initialize a label draw descriptor from an object's styles in its current state
@@ -77,7 +75,7 @@ void lv_obj_init_draw_rect_dsc(struct _lv_obj_t * obj, uint8_t part, lv_draw_rec
  *                 If the `opa` filed is set to or the property is equal to `LV_OPA_TRANSP` the rest won't be initialized.
  *                 Should be initialized with `lv_draw_label_dsc_init(draw_dsc)`.
  */
-void lv_obj_init_draw_label_dsc(struct _lv_obj_t * obj, uint8_t part, lv_draw_label_dsc_t * draw_dsc);
+void lv_obj_init_draw_label_dsc(struct _lv_obj_t * obj, uint32_t part, lv_draw_label_dsc_t * draw_dsc);
 
 /**
  * Initialize an image draw descriptor from an object's styles in its current state
@@ -86,7 +84,7 @@ void lv_obj_init_draw_label_dsc(struct _lv_obj_t * obj, uint8_t part, lv_draw_la
  * @param draw_dsc the descriptor the initialize.
  *                 Should be initialized with `lv_draw_image_dsc_init(draw_dsc)`.
  */
-void lv_obj_init_draw_img_dsc(struct _lv_obj_t * obj, uint8_t part, lv_draw_img_dsc_t * draw_dsc);
+void lv_obj_init_draw_img_dsc(struct _lv_obj_t * obj, uint32_t part, lv_draw_img_dsc_t * draw_dsc);
 
 
 /**
@@ -96,7 +94,7 @@ void lv_obj_init_draw_img_dsc(struct _lv_obj_t * obj, uint8_t part, lv_draw_img_
  * @param draw_dsc the descriptor the initialize.
  *                 Should be initialized with `lv_draw_line_dsc_init(draw_dsc)`.
  */
-void lv_obj_init_draw_line_dsc(struct _lv_obj_t * obj, uint8_t part, lv_draw_line_dsc_t * draw_dsc);
+void lv_obj_init_draw_line_dsc(struct _lv_obj_t * obj, uint32_t part, lv_draw_line_dsc_t * draw_dsc);
 
 /**
  * Initialize an arc draw descriptor from an object's styles in its current state
@@ -105,7 +103,7 @@ void lv_obj_init_draw_line_dsc(struct _lv_obj_t * obj, uint8_t part, lv_draw_lin
  * @param draw_dsc the descriptor the initialize.
  *                 Should be initialized with `lv_draw_arc_dsc_init(draw_dsc)`.
  */
-void lv_obj_init_draw_arc_dsc(struct _lv_obj_t * obj, uint8_t part, lv_draw_arc_dsc_t * draw_dsc);
+void lv_obj_init_draw_arc_dsc(struct _lv_obj_t * obj, uint32_t part, lv_draw_arc_dsc_t * draw_dsc);
 
 /**
  * Get the required extra size (around the object's part) to draw shadow, outline, value etc.
@@ -113,7 +111,7 @@ void lv_obj_init_draw_arc_dsc(struct _lv_obj_t * obj, uint8_t part, lv_draw_arc_
  * @param part part of the object
  * @return the extra size required around the object
  */
-lv_coord_t lv_obj_calculate_ext_draw_size(struct _lv_obj_t * obj, uint8_t part);
+lv_coord_t lv_obj_calculate_ext_draw_size(struct _lv_obj_t * obj, uint32_t part);
 
 /**
  * Initialize a draw descriptor used in events.
