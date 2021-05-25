@@ -28,6 +28,8 @@ extern "C" {
 void lv_example_arc_1(void);
 void lv_example_arc_2(void);
 
+void lv_example_animimg_1(void);
+
 void lv_example_bar_1(void);
 void lv_example_bar_2(void);
 void lv_example_bar_3(void);
@@ -54,6 +56,7 @@ void lv_example_chart_3(void);
 void lv_example_chart_4(void);
 void lv_example_chart_5(void);
 void lv_example_chart_6(void);
+void lv_example_chart_7(void);
 
 void lv_example_checkbox_1(void);
 
@@ -89,9 +92,11 @@ void lv_example_meter_4(void);
 void lv_example_msgbox_1(void);
 
 void lv_example_obj_1(void);
+void lv_example_obj_2(void);
 
 void lv_example_roller_1(void);
 void lv_example_roller_2(void);
+void lv_example_roller_3(void);
 
 void lv_example_slider_1(void);
 void lv_example_slider_2(void);
@@ -115,6 +120,8 @@ void lv_example_textarea_3(void);
 void lv_example_tileview_1(void);
 
 void lv_example_win_1(void);
+
+void lv_example_span_1(void);
 
 /**********************
  *      MACROS

@@ -145,6 +145,7 @@ void lv_obj_init_draw_rect_dsc(lv_obj_t * obj, uint32_t part, lv_draw_rect_dsc_t
             draw_dsc->border_opa = lv_obj_get_style_border_opa(obj, part);
             if(draw_dsc->border_opa > LV_OPA_MIN) {
                 draw_dsc->border_color = lv_obj_get_style_border_color_filtered(obj, part);
+                draw_dsc->border_side = lv_obj_get_style_border_side(obj, part);
             }
         }
     }
@@ -200,14 +201,14 @@ void lv_obj_init_draw_label_dsc(lv_obj_t * obj, uint32_t part, lv_draw_label_dsc
 
     draw_dsc->font = lv_obj_get_style_text_font(obj, part);
 
-#if LV_USE_BIDI == 0
-    draw_dsc->bidi_dir = lv_obj_get_base_dir(obj);
+#if LV_USE_BIDI
+    draw_dsc->bidi_dir = lv_obj_get_style_base_dir(obj, LV_PART_MAIN);
 #endif
 
     draw_dsc->align = lv_obj_get_style_text_align(obj, part);
     if(draw_dsc->align == LV_TEXT_ALIGN_AUTO) {
-        if(draw_dsc->bidi_dir == LV_BIDI_DIR_RTL) draw_dsc->align = LV_TEXT_ALIGN_RIGHT;
-        draw_dsc->align = LV_TEXT_ALIGN_LEFT;
+        if(draw_dsc->bidi_dir == LV_BASE_DIR_RTL) draw_dsc->align = LV_TEXT_ALIGN_RIGHT;
+        else draw_dsc->align = LV_TEXT_ALIGN_LEFT;
     }
 }
 
@@ -323,9 +324,9 @@ lv_coord_t lv_obj_calculate_ext_draw_size(lv_obj_t * obj, uint32_t part)
     return s;
 }
 
-void lv_obj_draw_dsc_init(lv_obj_draw_dsc_t * dsc, const lv_area_t * clip_area)
+void lv_obj_draw_dsc_init(lv_obj_draw_part_dsc_t * dsc, const lv_area_t * clip_area)
 {
-    lv_memset_00(dsc, sizeof(lv_obj_draw_dsc_t));
+    lv_memset_00(dsc, sizeof(lv_obj_draw_part_dsc_t));
     dsc->clip_area = clip_area;
 }
 

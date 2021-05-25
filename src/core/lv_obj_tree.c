@@ -144,9 +144,9 @@ void lv_obj_set_parent(lv_obj_t * obj, lv_obj_t * parent)
     lv_point_t old_pos;
     old_pos.y = lv_obj_get_y(obj);
 
-    lv_bidi_dir_t new_base_dir = lv_obj_get_base_dir(parent);
+    lv_base_dir_t new_base_dir = lv_obj_get_style_base_dir(parent, LV_PART_MAIN);
 
-    if(new_base_dir != LV_BIDI_DIR_RTL) old_pos.x = lv_obj_get_x(obj);
+    if(new_base_dir != LV_BASE_DIR_RTL) old_pos.x = lv_obj_get_x(obj);
     else  old_pos.x = old_parent->coords.x2 - obj->coords.x2;
 
     /*Remove the object from the old parent's child list*/
@@ -169,7 +169,7 @@ void lv_obj_set_parent(lv_obj_t * obj, lv_obj_t * parent)
 
     obj->parent = parent;
 
-    if(new_base_dir != LV_BIDI_DIR_RTL) {
+    if(new_base_dir != LV_BASE_DIR_RTL) {
         lv_obj_set_pos(obj, old_pos.x, old_pos.y);
     }
     else {
@@ -216,7 +216,7 @@ void lv_obj_move_background(lv_obj_t * obj)
     lv_obj_invalidate(parent);
 
     int32_t i;
-    for(i = lv_obj_get_child_id(obj) - 1; i > 0; i--) {
+    for(i = lv_obj_get_child_id(obj); i > 0; i--) {
         parent->spec_attr->children[i] = parent->spec_attr->children[i-1];
     }
     parent->spec_attr->children[0] = obj;
@@ -409,7 +409,21 @@ static void obj_del_core(lv_obj_t * obj)
 
 static lv_obj_tree_walk_res_t walk_core(lv_obj_t * obj, lv_obj_tree_walk_cb_t cb, void * user_data)
 {
-    lv_obj_tree_walk_res_t res = cb(obj, user_data);
+    lv_obj_tree_walk_res_t res = LV_OBJ_TREE_WALK_NEXT;
+
+    if(obj == NULL) {
+        lv_disp_t * disp = lv_disp_get_next(NULL);
+        while(disp) {
+            uint32_t i;
+            for(i = 0; i < disp->screen_cnt; i++) {
+                walk_core(disp->screens[i], cb, user_data);
+            }
+            disp = lv_disp_get_next(disp);
+        }
+        return LV_OBJ_TREE_WALK_END;    /*The value doesn't matter as it wasn't called recursively*/
+    }
+
+    res = cb(obj, user_data);
 
     if(res == LV_OBJ_TREE_WALK_END) return LV_OBJ_TREE_WALK_END;
 

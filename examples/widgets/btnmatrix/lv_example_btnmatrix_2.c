@@ -7,12 +7,12 @@ static void event_cb(lv_event_t * e)
     lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t * obj = lv_event_get_target(e);
     if(code == LV_EVENT_DRAW_PART_BEGIN) {
-        lv_obj_draw_dsc_t * dsc = lv_event_get_param(e);
+        lv_obj_draw_part_dsc_t * dsc = lv_event_get_param(e);
 
         /*Change the draw descriptor the 2nd button*/
         if(dsc->id == 1) {
             dsc->rect_dsc->radius = 0;
-            if(lv_btnmatrix_get_selected_btn(obj) == dsc->id)  dsc->rect_dsc->bg_color = lv_palette_darken(LV_PALETTE_GREY, 3);
+            if(lv_btnmatrix_get_selected_btn(obj) == dsc->id)  dsc->rect_dsc->bg_color = lv_palette_darken(LV_PALETTE_BLUE, 3);
             else dsc->rect_dsc->bg_color = lv_palette_main(LV_PALETTE_BLUE);
 
             dsc->rect_dsc->shadow_width = 6;
@@ -34,7 +34,7 @@ static void event_cb(lv_event_t * e)
         }
     }
     if(code == LV_EVENT_DRAW_PART_END) {
-        lv_obj_draw_dsc_t * dsc = lv_event_get_param(e);
+        lv_obj_draw_part_dsc_t * dsc = lv_event_get_param(e);
 
         /*Add custom content to the 4th button when the button itself was drawn*/
         if(dsc->id == 3) {
@@ -60,7 +60,7 @@ static void event_cb(lv_event_t * e)
 }
 
 /**
- * Add custom drawer to the button matrix to c
+ * Add custom drawer to the button matrix to customize butons one by one
  */
 void lv_example_btnmatrix_2(void)
 {

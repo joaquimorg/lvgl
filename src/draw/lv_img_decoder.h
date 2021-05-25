@@ -42,8 +42,8 @@ typedef uint8_t lv_img_src_t;
 
 /*Decoder function definitions*/
 
-struct _lv_img_decoder;
 struct _lv_img_decoder_dsc;
+struct _lv_img_decoder;
 
 /**
  * Get info from an image and store in the `header`
@@ -83,6 +83,7 @@ typedef lv_res_t (*lv_img_decoder_read_line_f_t)(struct _lv_img_decoder * decode
  */
 typedef void (*lv_img_decoder_close_f_t)(struct _lv_img_decoder * decoder, struct _lv_img_decoder_dsc * dsc);
 
+
 typedef struct _lv_img_decoder {
     lv_img_decoder_info_f_t info_cb;
     lv_img_decoder_open_f_t open_cb;
@@ -94,6 +95,7 @@ typedef struct _lv_img_decoder {
 #endif
 } lv_img_decoder_t;
 
+
 /**Describe an image decoding session. Stores data about the decoding*/
 typedef struct _lv_img_decoder_dsc {
     /**The decoder which was able to open the image source*/
@@ -102,8 +104,11 @@ typedef struct _lv_img_decoder_dsc {
     /**The image source. A file path like "S:my_img.png" or pointer to an `lv_img_dsc_t` variable*/
     const void * src;
 
-    /**Style to draw the image.*/
+    /**Color to draw the image. USed when the image has alpha channel only*/
     lv_color_t color;
+
+    /**Frame of the image, using with animated images*/
+    int32_t frame_id;
 
     /**Type of the source: file or variable. Can be set in `open` function if required*/
     lv_img_src_t src_type;
@@ -157,10 +162,11 @@ lv_res_t lv_img_decoder_get_info(const void * src, lv_img_header_t * header);
  *  2) Variable: Pointer to an `lv_img_dsc_t` variable
  *  3) Symbol: E.g. `LV_SYMBOL_OK`
  * @param color The color of the image with `LV_IMG_CF_ALPHA_...`
+ * @param frame_id the index of the frame. Used only with animated images, set 0 for normal images
  * @return LV_RES_OK: opened the image. `dsc->img_data` and `dsc->header` are set.
  *         LV_RES_INV: none of the registered image decoders were able to open the image.
  */
-lv_res_t lv_img_decoder_open(lv_img_decoder_dsc_t * dsc, const void * src, lv_color_t color);
+lv_res_t lv_img_decoder_open(lv_img_decoder_dsc_t * dsc, const void * src, lv_color_t color, int32_t frame_id);
 
 /**
  * Read a line from an opened image

@@ -67,7 +67,9 @@ const lv_obj_class_t lv_canvas_class = {
 lv_obj_t * lv_canvas_create(lv_obj_t * parent)
 {
     LV_LOG_INFO("begin")
-    return lv_obj_create_from_class(&lv_canvas_class, parent);
+    lv_obj_t * obj = lv_obj_class_create_obj(MY_CLASS, parent);
+    lv_obj_class_init_obj(obj);
+    return obj;
 }
 
 /*=====================
@@ -176,7 +178,7 @@ void lv_canvas_transform(lv_obj_t * obj, lv_img_dsc_t * img, int16_t angle, uint
     int32_t y;
     bool ret;
 
-    lv_img_transform_dsc_t dsc;
+    _lv_img_transform_dsc_t dsc;
     dsc.cfg.angle = angle;
     dsc.cfg.zoom = zoom;
     dsc.cfg.src = img->data;

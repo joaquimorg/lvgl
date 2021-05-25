@@ -54,7 +54,6 @@ static void draw_scrollbar(lv_obj_t * obj, const lv_area_t * clip_area);
 static lv_res_t scrollbar_init_draw_dsc(lv_obj_t * obj, lv_draw_rect_dsc_t * dsc);
 static bool obj_valid_child(const lv_obj_t * parent, const lv_obj_t * obj_to_find);
 static void lv_obj_set_state(lv_obj_t * obj, lv_state_t new_state);
-static void base_dir_refr_children(lv_obj_t * obj);
 
 /**********************
  *  STATIC VARIABLES
@@ -174,7 +173,10 @@ void lv_deinit(void)
 
 lv_obj_t * lv_obj_create(lv_obj_t * parent)
 {
-    return lv_obj_create_from_class(&lv_obj_class, parent);
+    LV_LOG_INFO("begin")
+    lv_obj_t * obj = lv_obj_class_create_obj(MY_CLASS, parent);
+    lv_obj_class_init_obj(obj);
+    return obj;
 }
 
 /*=====================
@@ -244,25 +246,6 @@ void lv_obj_clear_state(lv_obj_t * obj, lv_state_t state)
     }
 }
 
-void lv_obj_set_base_dir(lv_obj_t * obj, lv_bidi_dir_t dir)
-{
-    if(dir != LV_BIDI_DIR_LTR && dir != LV_BIDI_DIR_RTL &&
-       dir != LV_BIDI_DIR_AUTO && dir != LV_BIDI_DIR_INHERIT) {
-
-        LV_LOG_WARN("lv_obj_set_base_dir: invalid base direction: %d", dir);
-        return;
-    }
-
-    lv_obj_allocate_spec_attr(obj);
-    obj->spec_attr->base_dir = dir;
-    lv_event_send(obj, LV_EVENT_BASE_DIR_CHANGED, NULL);
-
-    /*Notify the children about the parent base dir has changed.
-     *(The children might have `LV_BIDI_DIR_INHERIT`)*/
-    base_dir_refr_children(obj);
-}
-
-
 /*=======================
  * Getter functions
  *======================*/
@@ -281,37 +264,12 @@ bool lv_obj_has_flag_any(const lv_obj_t * obj, lv_obj_flag_t f)
     return (obj->flags & f) ? true : false;
 }
 
-lv_bidi_dir_t lv_obj_get_base_dir(const lv_obj_t * obj)
-{
-    LV_ASSERT_OBJ(obj, MY_CLASS);
-
-#if LV_USE_BIDI
-    if(obj->spec_attr == NULL) return LV_BIDI_DIR_LTR;
-    const lv_obj_t * parent = obj;
-
-    while(parent) {
-        /*If the base dir set use it. If not set assume INHERIT so got the next parent*/
-        if(parent->spec_attr) {
-            if(parent->spec_attr->base_dir != LV_BIDI_DIR_INHERIT) return parent->spec_attr->base_dir;
-        }
-
-        parent = lv_obj_get_parent(parent);
-    }
-
-    return LV_BIDI_BASE_DIR_DEF;
-#else
-    (void) obj;  /*Unused*/
-    return LV_BIDI_DIR_LTR;
-#endif
-}
-
 lv_state_t lv_obj_get_state(const lv_obj_t * obj)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
 
     return obj->state;
 }
-
 
 bool lv_obj_has_state(const lv_obj_t * obj, lv_state_t state)
 {
@@ -339,28 +297,15 @@ void lv_obj_allocate_spec_attr(lv_obj_t * obj)
     if(obj->spec_attr == NULL) {
         static uint32_t x = 0;
         x++;
-        obj->spec_attr = lv_mem_alloc(sizeof(lv_obj_spec_attr_t));
+        obj->spec_attr = lv_mem_alloc(sizeof(_lv_obj_spec_attr_t));
         LV_ASSERT_MALLOC(obj->spec_attr);
         if(obj->spec_attr == NULL) return;
 
-        lv_memset_00(obj->spec_attr, sizeof(lv_obj_spec_attr_t));
+        lv_memset_00(obj->spec_attr, sizeof(_lv_obj_spec_attr_t));
 
         obj->spec_attr->scroll_dir = LV_DIR_ALL;
-        obj->spec_attr->base_dir = LV_BIDI_DIR_INHERIT;
         obj->spec_attr->scrollbar_mode = LV_SCROLLBAR_MODE_AUTO;
-
     }
-}
-
-lv_obj_t * lv_obj_get_focused_obj(const lv_obj_t * obj)
-{
-    if(obj == NULL) return NULL;
-    const lv_obj_t * focus_obj = obj;
-    while(lv_obj_has_flag(focus_obj, LV_OBJ_FLAG_FOCUS_BUBBLE) != false && focus_obj != NULL) {
-        focus_obj = lv_obj_get_parent(focus_obj);
-    }
-
-    return (lv_obj_t *)focus_obj;
 }
 
 bool lv_obj_check_type(const lv_obj_t * obj, const lv_obj_class_t * class_p)
@@ -462,9 +407,9 @@ static void lv_obj_draw(lv_event_t * e)
     lv_obj_t * obj = lv_event_get_target(e);
     if(code == LV_EVENT_COVER_CHECK) {
         lv_cover_check_info_t * info = lv_event_get_param(e);
-        if(info->res == LV_DRAW_RES_MASKED) return;
+        if(info->res == LV_COVER_RES_MASKED) return;
         if(lv_obj_get_style_clip_corner(obj, LV_PART_MAIN)) {
-            info->res = LV_DRAW_RES_MASKED;
+            info->res = LV_COVER_RES_MASKED;
             return;
         }
 
@@ -480,27 +425,27 @@ static void lv_obj_draw(lv_event_t * e)
         coords.y2 += h;
 
         if(_lv_area_is_in(info->area, &coords, r) == false) {
-            info->res = LV_DRAW_RES_NOT_COVER;
+            info->res = LV_COVER_RES_NOT_COVER;
            return;
         }
 
         if(lv_obj_get_style_bg_opa(obj, LV_PART_MAIN) < LV_OPA_MAX) {
-            info->res = LV_DRAW_RES_NOT_COVER;
+            info->res = LV_COVER_RES_NOT_COVER;
             return;
         }
 
 #if LV_DRAW_COMPLEX
         if(lv_obj_get_style_blend_mode(obj, LV_PART_MAIN) != LV_BLEND_MODE_NORMAL) {
-            info->res = LV_DRAW_RES_NOT_COVER;
+            info->res = LV_COVER_RES_NOT_COVER;
             return;
         }
 #endif
         if(lv_obj_get_style_opa(obj, LV_PART_MAIN) < LV_OPA_MAX) {
-            info->res = LV_DRAW_RES_NOT_COVER;
+            info->res = LV_COVER_RES_NOT_COVER;
             return;
         }
 
-        info->res = LV_DRAW_RES_COVER;
+        info->res = LV_COVER_RES_COVER;
 
     }
     else if(code == LV_EVENT_DRAW_MAIN) {
@@ -644,6 +589,9 @@ static void lv_obj_event(const lv_obj_class_t * class_p, lv_event_t * e)
         if(lv_indev_get_scroll_obj(param) == NULL && lv_obj_has_flag(obj, LV_OBJ_FLAG_CHECKABLE)) {
             if(!(lv_obj_get_state(obj) & LV_STATE_CHECKED)) lv_obj_add_state(obj, LV_STATE_CHECKED);
             else lv_obj_clear_state(obj, LV_STATE_CHECKED);
+
+            lv_res_t res = lv_event_send(obj, LV_EVENT_VALUE_CHANGED, NULL);
+            if(res != LV_RES_OK) return;
         }
     }
     else if(code == LV_EVENT_PRESS_LOST) {
@@ -651,17 +599,14 @@ static void lv_obj_event(const lv_obj_class_t * class_p, lv_event_t * e)
     }
     else if(code == LV_EVENT_KEY) {
         if(lv_obj_has_flag(obj, LV_OBJ_FLAG_CHECKABLE)) {
-            uint32_t state = 0;
             char c = *((char *)lv_event_get_param(e));
             if(c == LV_KEY_RIGHT || c == LV_KEY_UP) {
                 lv_obj_add_state(obj, LV_STATE_CHECKED);
-                state = 1;
             }
             else if(c == LV_KEY_LEFT || c == LV_KEY_DOWN) {
                 lv_obj_clear_state(obj, LV_STATE_CHECKED);
-                state = 0;
             }
-            lv_res_t res = lv_event_send(obj, LV_EVENT_VALUE_CHANGED, &state);
+            lv_res_t res = lv_event_send(obj, LV_EVENT_VALUE_CHANGED, NULL);
             if(res != LV_RES_OK) return;
         }
     }
@@ -673,20 +618,15 @@ static void lv_obj_event(const lv_obj_class_t * class_p, lv_event_t * e)
         bool editing = false;
         editing = lv_group_get_editing(lv_obj_get_group(obj));
         lv_state_t state = LV_STATE_FOCUSED;
-        lv_indev_type_t indev_type = lv_indev_get_type(lv_indev_get_act());
+
+        lv_indev_t * indev = lv_indev_get_act();
+        lv_indev_type_t indev_type = lv_indev_get_type(indev);
         if(indev_type == LV_INDEV_TYPE_KEYPAD || indev_type == LV_INDEV_TYPE_ENCODER) state |= LV_STATE_FOCUS_KEY;
         if(editing) {
             state |= LV_STATE_EDITED;
-
-            /*if using focus mode, change target to parent*/
-            obj = lv_obj_get_focused_obj(obj);
-
             lv_obj_add_state(obj, state);
         }
         else {
-            /*if using focus mode, change target to parent*/
-            obj = lv_obj_get_focused_obj(obj);
-
             lv_obj_add_state(obj, state);
             lv_obj_clear_state(obj, LV_STATE_EDITED);
         }
@@ -698,24 +638,19 @@ static void lv_obj_event(const lv_obj_class_t * class_p, lv_event_t * e)
         lv_obj_clear_state(obj, LV_STATE_SCROLLED);
     }
     else if(code == LV_EVENT_DEFOCUSED) {
-        /*if using focus mode, change target to parent*/
-        obj = lv_obj_get_focused_obj(obj);
-
         lv_obj_clear_state(obj, LV_STATE_FOCUSED | LV_STATE_EDITED | LV_STATE_FOCUS_KEY);
     }
     else if(code == LV_EVENT_SIZE_CHANGED) {
-        uint32_t i;
-        for(i = 0; i < lv_obj_get_child_cnt(obj); i++) {
-            lv_obj_t * child = lv_obj_get_child(obj, i);
-
-            lv_obj_refr_size(child);
-            lv_obj_refr_pos(child);
-        }
-
         lv_coord_t align = lv_obj_get_style_align(obj, LV_PART_MAIN);
         uint16_t layout = lv_obj_get_style_layout(obj, LV_PART_MAIN);
         if(layout || align) {
             lv_obj_mark_layout_as_dirty(obj);
+        }
+
+        uint32_t i;
+        for(i = 0; i < lv_obj_get_child_cnt(obj); i++) {
+            lv_obj_t * child = lv_obj_get_child(obj, i);
+            lv_obj_mark_layout_as_dirty(child);
         }
     }
     else if(code == LV_EVENT_CHILD_CHANGED) {
@@ -727,11 +662,6 @@ static void lv_obj_event(const lv_obj_class_t * class_p, lv_event_t * e)
             lv_obj_mark_layout_as_dirty(obj);
         }
     }
-    else if(code == LV_EVENT_BASE_DIR_CHANGED) {
-        /*The layout might depend on the base dir.
-         *E.g. the first is element is on the left or right*/
-        lv_obj_mark_layout_as_dirty(obj);
-    }
     else if(code == LV_EVENT_SCROLL_END) {
         if(lv_obj_get_scrollbar_mode(obj) == LV_SCROLLBAR_MODE_ACTIVE) {
             lv_obj_invalidate(obj);
@@ -741,20 +671,6 @@ static void lv_obj_event(const lv_obj_class_t * class_p, lv_event_t * e)
         lv_coord_t * s = lv_event_get_param(e);
         lv_coord_t d = lv_obj_calculate_ext_draw_size(obj, LV_PART_MAIN);
         *s = LV_MAX(*s, d);
-    }
-    else if(code == LV_EVENT_STYLE_CHANGED) {
-        /*Padding might have changed so the layout should be recalculated*/
-        uint32_t i;
-        for(i = 0; i < lv_obj_get_child_cnt(obj); i++) {
-            lv_obj_t * child = lv_obj_get_child(obj, i);
-
-            lv_obj_refr_size(child);
-            lv_obj_refr_pos(child);
-        }
-
-        lv_obj_mark_layout_as_dirty(obj);
-
-        lv_obj_refresh_ext_draw_size(obj);
     }
     else if(code == LV_EVENT_DRAW_MAIN || code == LV_EVENT_DRAW_POST || code == LV_EVENT_COVER_CHECK) {
         lv_obj_draw(e);
@@ -785,8 +701,9 @@ static void lv_obj_set_state(lv_obj_t * obj, lv_state_t new_state)
     uint32_t tsi = 0;
     uint32_t i;
     for(i = 0; i < obj->style_cnt && tsi < STYLE_TRANSITION_MAX; i++) {
-        lv_obj_style_t * obj_style = &obj->styles[i];
+        _lv_obj_style_t * obj_style = &obj->styles[i];
         lv_state_t state_act = lv_obj_style_get_selector_state(obj->styles[i].selector);
+        lv_part_t part_act = lv_obj_style_get_selector_part(obj->styles[i].selector);
         if(state_act & (~new_state)) continue; /*Skip unrelated styles*/
         if(obj_style->is_trans) continue;
 
@@ -794,13 +711,15 @@ static void lv_obj_set_state(lv_obj_t * obj, lv_state_t new_state)
         if(lv_style_get_prop_inlined(obj_style->style, LV_STYLE_TRANSITION, &v) == false) continue;
         const lv_style_transition_dsc_t * tr = v.ptr;
 
-        /*Add the props t the set is not added yet or added but with smaller weight*/
+        /*Add the props to the set if not added yet or added but with smaller weight*/
         uint32_t j;
         for(j = 0; tr->props[j] != 0 && tsi < STYLE_TRANSITION_MAX; j++) {
             uint32_t t;
             for(t = 0; t < tsi; t++) {
-                lv_state_t state_tr = lv_obj_style_get_selector_state(ts[t].selector);
-                if(ts[t].prop == tr->props[j] && state_tr >= state_act) break;
+                lv_style_selector_t selector = lv_obj_style_get_selector_state(ts[t].selector);
+                lv_state_t state_ts = lv_obj_style_get_selector_state(selector);
+                lv_part_t part_ts = lv_obj_style_get_selector_part(selector);
+                if(ts[t].prop == tr->props[j] && part_ts == part_act && state_ts >= state_act) break;
             }
 
             /*If not found  add it*/
@@ -825,26 +744,15 @@ static void lv_obj_set_state(lv_obj_t * obj, lv_state_t new_state)
 
     lv_mem_buf_release(ts);
 
-    lv_obj_invalidate(obj);
+    if(cmp_res == _LV_STYLE_STATE_CMP_DIFF_REDRAW_MAIN) {
+        lv_obj_invalidate(obj);
+    }
 
     if(cmp_res == _LV_STYLE_STATE_CMP_DIFF_LAYOUT) {
         lv_obj_refresh_style(obj, LV_PART_ANY, LV_STYLE_PROP_ANY);
     }
     else if(cmp_res == _LV_STYLE_STATE_CMP_DIFF_DRAW_PAD) {
         lv_obj_refresh_ext_draw_size(obj);
-    }
-}
-
-
-static void base_dir_refr_children(lv_obj_t * obj)
-{
-    uint32_t i;
-    for(i = 0; i < lv_obj_get_child_cnt(obj); i++) {
-        lv_obj_t * child = lv_obj_get_child(obj, i);
-        if(lv_obj_get_base_dir(child) == LV_BIDI_DIR_INHERIT) {
-            lv_event_send(child, LV_EVENT_BASE_DIR_CHANGED, NULL);
-            base_dir_refr_children(child);
-        }
     }
 }
 

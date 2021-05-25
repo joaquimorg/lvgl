@@ -42,6 +42,10 @@
 #  endif
 #endif
 
+
+/*----------------------------------
+ * Start parsing lv_conf_template.h
+ -----------------------------------*/
 /*clang-format off*/
 
 #include <stdint.h>
@@ -1032,14 +1036,14 @@ e.g. "stm32f769xx.h" or "stm32f429xx.h"*/
 #endif
 #if LV_USE_BIDI
 /*Set the default direction. Supported values:
- *`LV_BIDI_DIR_LTR` Left-to-Right
- *`LV_BIDI_DIR_RTL` Right-to-Left
- *`LV_BIDI_DIR_AUTO` detect texts base direction*/
+ *`LV_BASE_DIR_LTR` Left-to-Right
+ *`LV_BASE_DIR_RTL` Right-to-Left
+ *`LV_BASE_DIR_AUTO` detect texts base direction*/
 #ifndef LV_BIDI_BASE_DIR_DEF
 #  ifdef CONFIG_LV_BIDI_BASE_DIR_DEF
 #    define LV_BIDI_BASE_DIR_DEF CONFIG_LV_BIDI_BASE_DIR_DEF
 #  else
-#    define  LV_BIDI_BASE_DIR_DEF  LV_BIDI_DIR_AUTO
+#    define  LV_BIDI_BASE_DIR_DEF  LV_BASE_DIR_AUTO
 #  endif
 #endif
 #endif
@@ -1065,6 +1069,14 @@ e.g. "stm32f769xx.h" or "stm32f429xx.h"*/
 #    define LV_USE_ARC CONFIG_LV_USE_ARC
 #  else
 #    define  LV_USE_ARC          1
+#  endif
+#endif
+
+#ifndef LV_USE_ANIMIMG
+#  ifdef CONFIG_LV_USE_ANIMIMG
+#    define LV_USE_ANIMIMG CONFIG_LV_USE_ANIMIMG
+#  else
+#    define  LV_USE_ANIMIMG      1
 #  endif
 #endif
 
@@ -1140,11 +1152,11 @@ e.g. "stm32f769xx.h" or "stm32f429xx.h"*/
 #  endif
 #endif
 #if LV_USE_LABEL
-#ifndef LV_LABEL_TEXT_SEL
-#  ifdef CONFIG_LV_LABEL_TEXT_SEL
-#    define LV_LABEL_TEXT_SEL CONFIG_LV_LABEL_TEXT_SEL
+#ifndef LV_LABEL_TEXT_SELECTION
+#  ifdef CONFIG_LV_LABEL_TEXT_SELECTION
+#    define LV_LABEL_TEXT_SELECTION CONFIG_LV_LABEL_TEXT_SELECTION
 #  else
-#    define  LV_LABEL_TEXT_SEL         1   /*Enable selecting text of the label*/
+#    define  LV_LABEL_TEXT_SELECTION         1   /*Enable selecting text of the label*/
 #  endif
 #endif
 #ifndef LV_LABEL_LONG_TXT_HINT
@@ -1381,6 +1393,14 @@ e.g. "stm32f769xx.h" or "stm32f429xx.h"*/
 #  endif
 #endif
 
+#ifndef LV_USE_SPAN
+#  ifdef CONFIG_LV_USE_SPAN
+#    define LV_USE_SPAN CONFIG_LV_USE_SPAN
+#  else
+#    define  LV_USE_SPAN          1
+#  endif
+#endif
+
 /*-----------
  * Themes
  *----------*/
@@ -1394,12 +1414,12 @@ e.g. "stm32f769xx.h" or "stm32f429xx.h"*/
 #endif
 #if LV_USE_THEME_DEFAULT
 
-/*1: Light mode; 0: Dark mode*/
-#ifndef LV_THEME_DEFAULT_PALETTE_LIGHT
-#  ifdef CONFIG_LV_THEME_DEFAULT_PALETTE_LIGHT
-#    define LV_THEME_DEFAULT_PALETTE_LIGHT CONFIG_LV_THEME_DEFAULT_PALETTE_LIGHT
+/*0: Light mode; 1: Dark mode*/
+#ifndef LV_THEME_DEFAULT_DARK
+#  ifdef CONFIG_LV_THEME_DEFAULT_DARK
+#    define LV_THEME_DEFAULT_DARK CONFIG_LV_THEME_DEFAULT_DARK
 #  else
-#    define  LV_THEME_DEFAULT_PALETTE_LIGHT     1
+#    define  LV_THEME_DEFAULT_DARK     0
 #  endif
 #endif
 
@@ -1468,13 +1488,14 @@ e.g. "stm32f769xx.h" or "stm32f429xx.h"*/
 
 
 
+/*----------------------------------
+ * End of parsing lv_conf_template.h
+ -----------------------------------*/
+
+LV_EXPORT_CONST_INT(LV_DPI_DEF);
+
 /*If running without lv_conf.h add typdesf with default value*/
 #if defined(LV_CONF_SKIP)
-
-
-# if LV_USE_USER_DATA
-  typedef void * lv_obj_user_data_t;
-# endif
 
 # if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_WARNINGS)    /*Disable warnings for Visual Studio*/
 #  define _CRT_SECURE_NO_WARNINGS

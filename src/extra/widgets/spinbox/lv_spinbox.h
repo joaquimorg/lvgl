@@ -42,7 +42,10 @@ typedef struct {
     uint16_t digit_count : 4;
     uint16_t dec_point_pos : 4; /*if 0, there is no separator and the number is an integer*/
     uint16_t rollover : 1;   // Set to true for rollover functionality
-} lv_spinbox_t;
+} _lv_spinbox_t;
+
+/*Trick to no expose the fields of the struct in the MicroPython binding*/
+typedef _lv_spinbox_t lv_spinbox_t;
 
 extern const lv_obj_class_t lv_spinbox_class;
 
@@ -62,18 +65,18 @@ lv_obj_t * lv_spinbox_create(lv_obj_t * parent);
  *====================*/
 
 /**
- * Set spinbox rollover function
- * @param spinbox pointer to spinbox
- * @param b true or false to enable or disable (default)
- */
-void lv_spinbox_set_rollover(lv_obj_t * obj, bool b);
-
-/**
  * Set spinbox value
  * @param spinbox pointer to spinbox
  * @param i value to be set
  */
 void lv_spinbox_set_value(lv_obj_t * obj, int32_t i);
+
+/**
+ * Set spinbox rollover function
+ * @param spinbox pointer to spinbox
+ * @param b true or false to enable or disable (default)
+ */
+void lv_spinbox_set_rollover(lv_obj_t * obj, bool b);
 
 /**
  * Set spinbox digit format (digit count and decimal format)
@@ -87,7 +90,7 @@ void lv_spinbox_set_digit_format(lv_obj_t * obj, uint8_t digit_count, uint8_t se
 /**
  * Set spinbox step
  * @param spinbox pointer to spinbox
- * @param step steps on increment/decrement
+ * @param step steps on increment/decrement. Can be 1, 10, 100, 1000, etc the digit that will change.
  */
 void lv_spinbox_set_step(lv_obj_t * obj, uint32_t step);
 

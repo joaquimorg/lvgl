@@ -27,6 +27,7 @@ extern "C" {
 #endif
 
 #define LV_NO_TIMER_READY 0xFFFFFFFF
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -48,7 +49,10 @@ typedef struct _lv_timer_t {
     void * user_data; /**< Custom user data*/
     int32_t repeat_count; /**< 1: One time;  -1 : infinity;  n>0: residual times*/
     uint32_t paused :1;
-} lv_timer_t;
+} _lv_timer_t;
+
+/*Trick to no expose the fields of the struct in the MicroPython binding*/
+typedef _lv_timer_t lv_timer_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -98,7 +102,9 @@ void lv_timer_del(lv_timer_t * timer);
  * @param timer pointer to an lv_timer
  * @param pause true: pause the timer; false: resume
  */
-void lv_timer_pause(lv_timer_t * timer, bool pause);
+void lv_timer_pause(lv_timer_t * timer);
+
+void lv_timer_resume(lv_timer_t * timer);
 
 /**
  * Set the callback the timer (the function to call periodically)

@@ -44,7 +44,10 @@ typedef struct {
     uint16_t highlighted_dates_num;          /*Number of elements in `highlighted_days`*/
     const char * map[8 * 7];
     char nums [7 * 6][4];
-} lv_calendar_t;
+} _lv_calendar_t;
+
+/*Trick to no expose the fields of the struct in the MicroPython binding*/
+typedef _lv_calendar_t lv_calendar_t;
 
 extern const lv_obj_class_t lv_calendar_class;
 
@@ -133,9 +136,9 @@ uint16_t lv_calendar_get_highlighted_dates_num(const lv_obj_t * calendar);
  * Get the currently pressed day
  * @param calendar pointer to a calendar object
  * @param date store the pressed date here
- * @return true: there is a valid pressed date; false: there is no pressed data
+ * @return LV_RES_OK: there is a valid pressed date; LV_RES_INV: there is no pressed data
  */
-bool lv_calendar_get_pressed_date(const lv_obj_t * calendar, lv_calendar_date_t * date);
+lv_res_t lv_calendar_get_pressed_date(const lv_obj_t * calendar, lv_calendar_date_t * date);
 
 /*=====================
  * Other functions

@@ -45,10 +45,12 @@ typedef uint8_t lv_key_t;
 /**********************
  *      TYPEDEFS
  **********************/
-struct _lv_group_t;
+
 struct _lv_obj_t;
+struct _lv_group_t;
 
 typedef void (*lv_group_focus_cb_t)(struct _lv_group_t *);
+
 
 /**
  * Groups can be used to logically hold objects so that they can be individually focused.
@@ -69,10 +71,15 @@ typedef struct _lv_group_t {
                                    deletion.*/
     uint8_t wrap : 1;           /**< 1: Focus next/prev can wrap at end of list. 0: Focus next/prev stops at end
                                    of list.*/
-} lv_group_t;
+} _lv_group_t;
 
-enum { LV_GROUP_REFOCUS_POLICY_NEXT = 0, LV_GROUP_REFOCUS_POLICY_PREV = 1 };
-typedef uint8_t lv_group_refocus_policy_t;
+/*Trick to no expose the fields of the struct in the MicroPython binding*/
+typedef _lv_group_t lv_group_t;
+
+typedef enum {
+    LV_GROUP_REFOCUS_POLICY_NEXT = 0,
+    LV_GROUP_REFOCUS_POLICY_PREV = 1
+}lv_group_refocus_policy_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -212,10 +219,17 @@ bool lv_group_get_editing(const lv_group_t * group);
 
 /**
  * Get whether focus next/prev will allow wrapping from first->last or last->first object.
- * @param group             pointer to group
+ * @param group         pointer to group
  * @param               en true: wrapping enabled; false: wrapping disabled
  */
 bool lv_group_get_wrap(lv_group_t * group);
+
+/**
+ * Get the number of object in the group
+ * @param group         pointer to a group
+ * @return              number of objects in the group
+ */
+uint32_t lv_group_get_obj_count(lv_group_t * group);
 
 /**********************
  *      MACROS

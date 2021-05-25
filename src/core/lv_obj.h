@@ -75,9 +75,9 @@ enum {
     LV_PART_TICKS        = 0x060000,   /**< Ticks on scale e.g. for a chart or meter*/
     LV_PART_CURSOR       = 0x070000,   /**< Mark a specific place e.g. for text area's cursor or on a chart*/
 
-    LV_PART_CUSTOM_FIRST = 0x800000,    /**< Extension point for custom widgets*/
+    LV_PART_CUSTOM_FIRST = 0x080000,    /**< Extension point for custom widgets*/
 
-    LV_PART_ANY          = 0xFF0000,    /**< Special value can be used in some functions to target all parts*/
+    LV_PART_ANY          = 0x0F0000,    /**< Special value can be used in some functions to target all parts*/
 };
 
 typedef uint32_t lv_part_t;
@@ -101,10 +101,9 @@ enum {
     LV_OBJ_FLAG_PRESS_LOCK      = (1 << 11), /**< Keep the object pressed even if the press slid from the object*/
     LV_OBJ_FLAG_EVENT_BUBBLE    = (1 << 12), /**< Propagate the events to the parent too*/
     LV_OBJ_FLAG_GESTURE_BUBBLE  = (1 << 13), /**< Propagate the gestures to the parent*/
-    LV_OBJ_FLAG_FOCUS_BUBBLE    = (1 << 14), /**< Propagate the focus to the parent*/
-    LV_OBJ_FLAG_ADV_HITTEST     = (1 << 15), /**< Allow performing more accurate hit (click) test. E.g. consider rounded corners.*/
-    LV_OBJ_FLAG_IGNORE_LAYOUT   = (1 << 16), /**< Make the object position-able by the layouts*/
-    LV_OBJ_FLAG_FLOATING        = (1 << 17), /**< Do not scroll the object when the parent scrolls and ignore layout*/
+    LV_OBJ_FLAG_ADV_HITTEST     = (1 << 14), /**< Allow performing more accurate hit (click) test. E.g. consider rounded corners.*/
+    LV_OBJ_FLAG_IGNORE_LAYOUT   = (1 << 15), /**< Make the object position-able by the layouts*/
+    LV_OBJ_FLAG_FLOATING        = (1 << 16), /**< Do not scroll the object when the parent scrolls and ignore layout*/
 
     LV_OBJ_FLAG_LAYOUT_1        = (1 << 23), /** Custom flag, free to use by layouts*/
     LV_OBJ_FLAG_LAYOUT_2        = (1 << 24), /** Custom flag, free to use by layouts*/
@@ -145,22 +144,21 @@ typedef struct {
     struct _lv_event_dsc_t * event_dsc;             /**< Dynamically allocated event callback and user data array*/
     lv_point_t scroll;                      /**< The current X/Y scroll offset*/
 
-    uint8_t ext_click_pad;      /**< Extra click padding in all direction*/
+    lv_coord_t ext_click_pad;              /**< Extra click padding in all direction*/
     lv_coord_t ext_draw_size;           /**< EXTend the size in every direction for drawing.*/
 
     lv_scrollbar_mode_t scrollbar_mode :2; /**< How to display scrollbars*/
     lv_scroll_snap_t scroll_snap_x : 2;      /**< Where to align the snapable children horizontally*/
     lv_scroll_snap_t scroll_snap_y : 2;      /**< Where to align the snapable children horizontally*/
     lv_dir_t scroll_dir :4;                /**< The allowed scroll direction(s)*/
-    lv_bidi_dir_t base_dir  : 2; /**< Base direction of texts related to this object*/
     uint8_t event_dsc_cnt;           /**< Number of event callabcks stored in `event_cb` array*/
-}lv_obj_spec_attr_t;
+}_lv_obj_spec_attr_t;
 
 typedef struct _lv_obj_t {
     const lv_obj_class_t * class_p;
     struct _lv_obj_t * parent;
-    lv_obj_spec_attr_t * spec_attr;
-    lv_obj_style_t * styles;
+    _lv_obj_spec_attr_t * spec_attr;
+    _lv_obj_style_t * styles;
 #if LV_USE_USER_DATA
     void * user_data;
 #endif
@@ -173,27 +171,10 @@ typedef struct _lv_obj_t {
     uint16_t style_cnt  :6;
     uint16_t h_layout   :1;
     uint16_t w_layout   :1;
-}lv_obj_t;
+}_lv_obj_t;
 
-
-typedef struct {
-    const lv_point_t * point;
-    bool result;
-} lv_hit_test_info_t;
-
-/**
- * Used as the event parameter of ::LV_EVENT_COVER_CHECK to check if an area is covered by the object or not.
- * `res` should be set like this:
- *   - If there is a draw mask on the object set to ::LV_DRAW_RES_MASKED
- *   - If there is no draw mask but the object simply not covers the area and `res` is not set to ::LV_DRAW_RES_MASKED set to ::LV_DRAW_RES_NOT_COVER
- *     E.g. `if(cover == false && info->res != LV_DRAW_RES_MASKED) info->res = LV_DRAW_RES_NOT_COVER;`
- *   - If the area is fully covered by the object leave `res` unchanged.
- */
-typedef struct {
-    lv_draw_res_t res;              /**< Set to ::LV_DRAW_RES_NOT_COVER or ::LV_DRAW_RES_MASKED. */
-    const lv_area_t * area;         /**< The area to check */
-} lv_cover_check_info_t;
-
+/*Trick to no expose the fields of the struct in the MicroPython binding*/
+typedef _lv_obj_t lv_obj_t;
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
@@ -258,11 +239,16 @@ void lv_obj_add_state(lv_obj_t * obj, lv_state_t state);
 void lv_obj_clear_state(lv_obj_t * obj, lv_state_t state);
 
 /**
- * Set the base direction of the object
+ * Set the user_data field of the object
  * @param obj   pointer to an object
- * @param dir   the new base direction. `LV_BIDI_DIR_LTR/RTL/AUTO/INHERIT`
+ * @param user_data   pointer to the new user_data.
  */
-void lv_obj_set_base_dir(lv_obj_t * obj, lv_bidi_dir_t dir);
+#if LV_USE_USER_DATA
+static inline void lv_obj_set_user_data(lv_obj_t * obj, void * user_data)
+{
+    obj->user_data = user_data;
+}
+#endif
 
 /*=======================
  * Getter functions
@@ -283,14 +269,6 @@ bool lv_obj_has_flag(const lv_obj_t * obj, lv_obj_flag_t f);
  * @return      true: at lest one flag flag is set; false: none of the flags are set
  */
 bool lv_obj_has_flag_any(const lv_obj_t * obj, lv_obj_flag_t f);
-
-
-/**
- * Get the base direction of the object
- * @param obj   pointer to an object
- * @return      the base direction. `LV_BIDI_DIR_LTR/RTL/AUTO/INHERIT`
- */
-lv_bidi_dir_t lv_obj_get_base_dir(const lv_obj_t * obj);
 
 /**
  * Get the state of an object
@@ -314,6 +292,18 @@ bool lv_obj_has_state(const lv_obj_t * obj, lv_state_t state);
  */
 void * lv_obj_get_group(const lv_obj_t * obj);
 
+/**
+ * Get the user_data field of the object
+ * @param obj   pointer to an object
+ * @return      the pointer to the user_data of the object
+ */
+#if LV_USE_USER_DATA
+static inline void * lv_obj_get_user_data(lv_obj_t * obj)
+{
+    return obj->user_data;
+}
+#endif
+
 /*=======================
  * Other functions
  *======================*/
@@ -323,13 +313,6 @@ void * lv_obj_get_group(const lv_obj_t * obj);
  * @param obj   pointer to an object
  */
 void lv_obj_allocate_spec_attr(lv_obj_t * obj);
-
-/**
- * Get the focused object by taking `LV_OBJ_FLAG_FOCUS_BUBBLE` into account.
- * @param obj   the start object
- * @return      the object to to really focus
- */
-lv_obj_t * lv_obj_get_focused_obj(const lv_obj_t * obj);
 
 /**
  * Get object's and its ancestors type. Put their name in `type_buf` starting with the current type.
@@ -362,6 +345,20 @@ const lv_obj_class_t * lv_obj_get_class(const lv_obj_t * obj);
  * @return          true: valid
  */
 bool lv_obj_is_valid(const lv_obj_t * obj);
+
+/**
+ * Scale the given number of pixels (a distance or size) relative to a 160 DPI display
+ * considering the DPI of the `obj`'s display.
+ * It ensures that e.g. `lv_dpx(100)` will have the same physical size regardless to the
+ * DPI of the display.
+ * @param obj   an object whose display's dpi should be considered
+ * @param n     the number of pixels to scale
+ * @return      `n x current_dpi/160`
+ */
+static inline lv_coord_t lv_obj_dpx(const lv_obj_t * obj, lv_coord_t n)
+{
+    return _LV_DPX_CALC(lv_disp_get_dpi(lv_obj_get_disp(obj)), n);
+}
 
 /**********************
  *      MACROS
